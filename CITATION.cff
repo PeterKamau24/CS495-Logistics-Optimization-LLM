@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+title: "CS495-Deepfake-Guardian"
+authors:
+  - family-names: "Kamau"
+    given-names: "Peter"
+  - family-names: "Albuquerque"
+    given-names: "Pedro"
+date-released: 2026
+version: 1.0.0
+license: MIT

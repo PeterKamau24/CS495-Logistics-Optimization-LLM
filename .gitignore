@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.venv/
+venv/
+.env.local
+.DS_Store
+.ipynb_checkpoints/
+.idea/
+.vscode/
+*.csv
+*.zip
+*.h5
+*.pt
+*.pth
