@@ -1,0 +1,13 @@
+driver_id,region_id,cost,eligible
+D1,R1,5,1
+D1,R2,8,1
+D1,R3,99,0
+D2,R1,6,1
+D2,R2,4,1
+D2,R3,7,1
+D3,R1,99,0
+D3,R2,3,1
+D3,R3,5,1
+D4,R1,4,1
+D4,R2,99,0
+D4,R3,6,1
