@@ -3,7 +3,7 @@
 ## Project Overview
 
 **Title:** LLM-Assisted Generation of Low-Level Discrete Optimization Solvers
-**Author:** [Your Name]
+**Author:** Peter Kamau
 **Course:** CS495 Capstone in Data Science — Bellevue College
 **Date:** April 27, 2026
 
