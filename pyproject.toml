@@ -1,0 +1,22 @@
+[project]
+name = "cs495-logistics-optimization-llm"
+version = "0.1.0"
+description = "LLM-assisted generation of low-level discrete optimization solvers"
+authors = [
+    {name = "Peter Kamau",email = "pm.kamau@bellevuecollege.edu"}
+]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.11,<3.15"
+dependencies = [
+    "pandas (>=3.0.2,<4.0.0)",
+    "numpy (>=2.4.4,<3.0.0)",
+    "scikit-learn (>=1.8.0,<2.0.0)",
+    "matplotlib (>=3.10.9,<4.0.0)",
+    "pulp (>=3.3.0,<4.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

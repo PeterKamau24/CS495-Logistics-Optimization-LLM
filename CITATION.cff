@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+title: "CS495 - Logistics Optimization with LLM Assistance"
+message: "If you use this project, please cite it as follows."
+type: software
+authors:
+  - family-names: "Kamau"
+    given-names: "Peter"
+repository-code: "https://github.com/PeterKamau24/CS495-Logistics-Optimization-LLM"
+abstract: "A capstone project that applies integer optimization to logistics driver-to-region assignment and evaluates LLM-assisted optimization model generation."
+license: MIT
+version: 0.1.0
+date-released: 2026-04-15
