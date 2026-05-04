@@ -1,0 +1,2 @@
+New-Item .\data\knapsack_input.txt -ItemType File -Force
+code .\data\knapsack_input.txt

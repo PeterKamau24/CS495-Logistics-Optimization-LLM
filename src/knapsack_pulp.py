@@ -115,7 +115,7 @@ if __name__ == "__main__":
     print("\n[TEST] Verifying PLAN.md instance (expected value = 11)...")
     sel, tw, tv = solve_knapsack(small_items, SMALL_CAPACITY, "PLAN.md Test Instance")
     assert tv == 11, f"Expected 11, got {tv}"
-    print(f"  ✅ PLAN.md instance verified: value={tv}, weight={tw}\n")
+    print(f"  PLAN.md instance verified: value={tv}, weight={tw}\n")
 
     # 2. Real-world disaster relief instance
     solve_knapsack(items, CAPACITY, "Disaster Relief Helicopter Packing")
