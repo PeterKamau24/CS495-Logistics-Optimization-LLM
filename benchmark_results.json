@@ -1,0 +1,50 @@
+[
+  {
+    "instance": "plan_md_instance.txt",
+    "n_items": 3,
+    "optimal_value": 11,
+    "python_time": 6.459000360337086e-06,
+    "cpp_time": 1e-06,
+    "speedup": 6.459000360337086
+  },
+  {
+    "instance": "instance_n10.txt",
+    "n_items": 10,
+    "optimal_value": 490,
+    "python_time": 0.00046999999995023245,
+    "cpp_time": 0.000126,
+    "speedup": 3.7301587297637497
+  },
+  {
+    "instance": "instance_n15.txt",
+    "n_items": 15,
+    "optimal_value": 489,
+    "python_time": 0.02221899999949528,
+    "cpp_time": 0.00378,
+    "speedup": 5.878042327908805
+  },
+  {
+    "instance": "instance_n20.txt",
+    "n_items": 20,
+    "optimal_value": 880,
+    "python_time": 0.9740540420007164,
+    "cpp_time": 0.132284,
+    "speedup": 7.363354918211699
+  },
+  {
+    "instance": "instance_n22.txt",
+    "n_items": 22,
+    "optimal_value": 914,
+    "python_time": 4.302758625000024,
+    "cpp_time": 0.541939,
+    "speedup": 7.939562616825924
+  },
+  {
+    "instance": "instance_n25.txt",
+    "n_items": 25,
+    "optimal_value": 1153,
+    "python_time": 39.48584974999994,
+    "cpp_time": 4.474404,
+    "speedup": 8.824828904587056
+  }
+]

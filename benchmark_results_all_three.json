@@ -1,0 +1,68 @@
+[
+  {
+    "instance": "plan_md_instance.txt",
+    "n_items": 3,
+    "optimal_value": 11,
+    "python_time": 2.042000232904684e-06,
+    "cpp_time": 1e-06,
+    "asm_time": 1e-06,
+    "cpp_speedup": 2.042000232904684,
+    "asm_speedup": 2.042000232904684,
+    "asm_vs_cpp": 1.0
+  },
+  {
+    "instance": "instance_n10.txt",
+    "n_items": 10,
+    "optimal_value": 490,
+    "python_time": 0.0004562920003081672,
+    "cpp_time": 0.000129,
+    "asm_time": 2.7e-05,
+    "cpp_speedup": 3.5371472892105986,
+    "asm_speedup": 16.899703715117305,
+    "asm_vs_cpp": 4.777777777777778
+  },
+  {
+    "instance": "instance_n15.txt",
+    "n_items": 15,
+    "optimal_value": 489,
+    "python_time": 0.02231470900005661,
+    "cpp_time": 0.003911,
+    "asm_time": 0.001039,
+    "cpp_speedup": 5.705627461021889,
+    "asm_speedup": 21.477102021228692,
+    "asm_vs_cpp": 3.7641963426371516
+  },
+  {
+    "instance": "instance_n20.txt",
+    "n_items": 20,
+    "optimal_value": 880,
+    "python_time": 0.9714273750005304,
+    "cpp_time": 0.132407,
+    "asm_time": 0.037338,
+    "cpp_speedup": 7.336676875093692,
+    "asm_speedup": 26.017123975588685,
+    "asm_vs_cpp": 3.5461727998285926
+  },
+  {
+    "instance": "instance_n22.txt",
+    "n_items": 22,
+    "optimal_value": 914,
+    "python_time": 4.286991416999626,
+    "cpp_time": 0.537583,
+    "asm_time": 0.158853,
+    "cpp_speedup": 7.974566563674123,
+    "asm_speedup": 26.987160563537525,
+    "asm_vs_cpp": 3.3841539032942407
+  },
+  {
+    "instance": "instance_n25.txt",
+    "n_items": 25,
+    "optimal_value": 1153,
+    "python_time": 39.15933870900062,
+    "cpp_time": 4.413476,
+    "asm_time": 1.398074,
+    "cpp_speedup": 8.872675122511286,
+    "asm_speedup": 28.009489275246246,
+    "asm_vs_cpp": 3.1568257474210952
+  }
+]
