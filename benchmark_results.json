@@ -3,48 +3,48 @@
     "instance": "plan_md_instance.txt",
     "n_items": 3,
     "optimal_value": 11,
-    "python_time": 6.459000360337086e-06,
-    "cpp_time": 1e-06,
-    "speedup": 6.459000360337086
+    "python_time": 1.1999999969702912e-05,
+    "cpp_time": 8e-06,
+    "speedup": 1.499999996212864
   },
   {
     "instance": "instance_n10.txt",
     "n_items": 10,
     "optimal_value": 490,
-    "python_time": 0.00046999999995023245,
-    "cpp_time": 0.000126,
-    "speedup": 3.7301587297637497
+    "python_time": 0.0012266000001091015,
+    "cpp_time": 0.000342,
+    "speedup": 3.5865497079213493
   },
   {
     "instance": "instance_n15.txt",
     "n_items": 15,
     "optimal_value": 489,
-    "python_time": 0.02221899999949528,
-    "cpp_time": 0.00378,
-    "speedup": 5.878042327908805
+    "python_time": 0.05735559999993711,
+    "cpp_time": 0.012606,
+    "speedup": 4.549865143577433
   },
   {
     "instance": "instance_n20.txt",
     "n_items": 20,
     "optimal_value": 880,
-    "python_time": 0.9740540420007164,
-    "cpp_time": 0.132284,
-    "speedup": 7.363354918211699
+    "python_time": 2.548752400000012,
+    "cpp_time": 0.456924,
+    "speedup": 5.578066374276712
   },
   {
     "instance": "instance_n22.txt",
     "n_items": 22,
     "optimal_value": 914,
-    "python_time": 4.302758625000024,
-    "cpp_time": 0.541939,
-    "speedup": 7.939562616825924
+    "python_time": 16.068285299999843,
+    "cpp_time": 2.318595,
+    "speedup": 6.930181985210803
   },
   {
     "instance": "instance_n25.txt",
     "n_items": 25,
     "optimal_value": 1153,
-    "python_time": 39.48584974999994,
-    "cpp_time": 4.474404,
-    "speedup": 8.824828904587056
+    "python_time": 136.00031959999978,
+    "cpp_time": 16.263666,
+    "speedup": 8.36221794028479
   }
 ]

@@ -35,7 +35,12 @@ def benchmark_python(instance_file: str) -> Dict:
     }
 
 
-def benchmark_cpp(instance_file: str, cpp_executable: str = './src/knapsack_brute_force_cpp') -> Dict:
+CPP_EXE = './src/knapsack_brute_force_cpp.exe' if os.name == 'nt' or os.path.exists('./src/knapsack_brute_force_cpp.exe') else './src/knapsack_brute_force_cpp'
+
+
+def benchmark_cpp(instance_file: str, cpp_executable: str = None) -> Dict:
+    if cpp_executable is None:
+        cpp_executable = CPP_EXE
     """
     Run C++ implementation and extract timing from output.
 
@@ -105,7 +110,7 @@ def run_single_instance_benchmark(instance_file: str) -> Dict:
         start = time.perf_counter()
         # We'll use subprocess for real C++ timing
         result = subprocess.run(
-            ['./src/knapsack_brute_force_cpp'],
+            [CPP_EXE],
             capture_output=True,
             text=True,
             timeout=300
@@ -201,9 +206,9 @@ def save_results(results: List[Dict], output_file: str = 'benchmark_results.json
 
 if __name__ == "__main__":
     # Check if C++ executable exists
-    if not os.path.exists('./src/knapsack_brute_force_cpp'):
-        print("Error: C++ executable not found. Please compile first:")
-        print("  g++ -std=c++17 -O3 -o src/knapsack_brute_force_cpp src/knapsack_brute_force.cpp")
+    if not os.path.exists(CPP_EXE):
+        print(f"Error: C++ executable not found at {CPP_EXE}. Please compile first:")
+        print("  g++ -std=c++17 -O3 -static -o src/knapsack_brute_force_cpp.exe src/knapsack_brute_force.cpp")
         exit(1)
 
     # Run benchmark
