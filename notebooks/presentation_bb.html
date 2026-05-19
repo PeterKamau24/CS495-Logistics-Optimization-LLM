@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Branch &amp; Bound for 0-1 Knapsack — CS495</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/dist/reset.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/dist/reveal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/dist/theme/black.css" id="theme">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/plugin/highlight/monokai.css">
+
+  <style>
+    .reveal h1 { font-size: 2.0em; }
+    .reveal h2 { font-size: 1.5em; color: #4fc3f7; }
+    .reveal h3 { font-size: 1.15em; color: #b3e5fc; }
+    .reveal .small { font-size: 0.7em; }
+    .reveal .tiny { font-size: 0.55em; }
+    .reveal pre { box-shadow: none; width: 100%; }
+    .reveal pre code { max-height: 500px; font-size: 0.7em; line-height: 1.25; padding: 1em; }
+    .reveal table { font-size: 0.7em; margin: 0.5em auto; }
+    .reveal table th { color: #4fc3f7; }
+    .reveal table td, .reveal table th { padding: 0.25em 0.75em; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5em; align-items: center; }
+    .highlight { color: #ffd54f; font-weight: bold; }
+    .accent { color: #4fc3f7; }
+    .warn { color: #ef5350; }
+    .ok { color: #66bb6a; }
+    .footer-note { position: absolute; bottom: 0.5em; right: 1em; font-size: 0.5em; opacity: 0.5; }
+    img.chart { max-height: 62vh; border-radius: 6px; background: white; padding: 4px; }
+    .items-box { display:inline-block; background:#1e1e1e; border:1px solid #444; border-radius:6px;
+                 padding:0.6em 1em; font-family:monospace; font-size:0.8em; }
+  </style>
+</head>
+<body>
+
+<div class="reveal">
+<div class="slides">
+
+<!-- ============================== 1. TITLE ============================== -->
+<section>
+  <h1>Branch &amp; Bound for the 0-1 Knapsack Problem</h1>
+  <h3>Python · C++ · x86-64 Assembly</h3>
+  <p class="small" style="margin-top: 1.5em;">
+    Peter Kamau<br>
+    CS495 Capstone — Logistics Optimization &amp; LLM<br>
+    May 2026
+  </p>
+  <aside class="notes">
+    Hi everyone. Today I want to show you how a textbook problem — 0-1 knapsack — and a
+    classical algorithm — Branch &amp; Bound — explain what's actually happening inside
+    the optimization solvers I'm using for my logistics capstone. I implemented the same
+    algorithm in three languages so we can isolate algorithm wins from language wins.
+    Aim for 7 minutes — flag me at 6.
+  </aside>
+</section>
+
+<!-- ============================== 2. THE PROBLEM ============================== -->
+<section>
+  <h2>The 0-1 Knapsack Problem</h2>
+  <div class="two-col">
+    <div>
+      <p class="small">Given <span class="accent">n</span> items with weights <em>w<sub>i</sub></em> and values <em>v<sub>i</sub></em>, and a knapsack of capacity <span class="accent">C</span> — pick a subset that <span class="highlight">maximizes total value</span> without exceeding capacity.</p>
+      <pre class="small"><code class="language-text">maximize   Σ vᵢ · xᵢ
+subject to Σ wᵢ · xᵢ ≤ C
+           xᵢ ∈ {0, 1}</code></pre>
+    </div>
+    <div class="small">
+      <h3>Why it matters</h3>
+      <ul>
+        <li><span class="ok">Canonical</span> NP-hard problem</li>
+        <li>Same family as <em>driver-to-region</em>, truck loading, budget allocation</li>
+        <li>Solvers like <strong>PuLP/CBC</strong> use B&amp;B under the hood</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">
+    Quick problem framing. Every x_i is a binary in-or-out choice. The constraint is
+    capacity. The objective is total value. NP-hard means no known polynomial algorithm
+    that's always exact. Connect it to logistics: items become shipments and capacity
+    becomes the truck. The driver-to-region assignment in my project is the same family —
+    binary decisions with linear constraints.
+  </aside>
+</section>
+
+<!-- ============================== 3. CONCRETE EXAMPLE ============================== -->
+<section>
+  <h2>A Concrete Tiny Instance</h2>
+  <p class="small">4 items, capacity 8. Which subset wins?</p>
+  <div class="items-box small">
+A:  value=10  weight=2   (ratio 5.00)
+B:  value=10  weight=3   (ratio 3.33)
+C:  value=12  weight=5   (ratio 2.40)
+D:  value= 8  weight=4   (ratio 2.00)
+  </div>
+  <p class="small" style="margin-top:1em;">
+    Sorted by value/weight ratio. <span class="accent">16 subsets</span> total at n=4.
+    Manageable by hand — but at n=25, that's <span class="warn">33 million</span> subsets.
+  </p>
+  <p class="small">Hold this in your head — we'll trace the B&amp;B tree on this exact instance in a moment.</p>
+  <aside class="notes">
+    Anchor instance. The ratio column is the LP "bang for your buck" — high ratio items
+    are the greedy first choices. Optimal here is B+C = value 22 with weight 8. Hold that
+    answer for the tree slide.
+  </aside>
+</section>
+
+<!-- ============================== 4. BRUTE FORCE ============================== -->
+<section>
+  <h2>Baseline: Brute Force</h2>
+  <p class="small">Enumerate every subset — <span class="warn">2<sup>n</sup></span> of them.</p>
+
+  <pre><code class="language-python" data-trim>for mask in range(1 &lt;&lt; n):           # 2^n iterations
+    w, v = 0, 0
+    for i in range(n):
+        if mask &amp; (1 &lt;&lt; i):
+            w += weights[i]
+            v += values[i]
+    if w &lt;= capacity and v &gt; best:
+        best = v</code></pre>
+
+  <table>
+    <tr><th>n</th><th>2<sup>n</sup></th><th>Python</th><th>C++</th></tr>
+    <tr><td>20</td><td>~1M</td><td>2.7 s</td><td>0.46 s</td></tr>
+    <tr><td>22</td><td>~4M</td><td>11.8 s</td><td>1.9 s</td></tr>
+    <tr><td>25</td><td>~33M</td><td class="warn">102 s</td><td>15.6 s</td></tr>
+  </table>
+  <aside class="notes">
+    Exponential. Adding one item DOUBLES the work. Even in C++ at n=25 we're at 15 seconds.
+    At n=30 you'd be at 8 minutes. At n=40, you'd be measuring in days. This is the wall
+    we have to break.
+  </aside>
+</section>
+
+<!-- ============================== 5. B&B IDEA ============================== -->
+<section>
+  <h2>Branch &amp; Bound — The Idea</h2>
+  <div class="small" style="text-align:left;">
+    <ol style="line-height:1.7;">
+      <li><span class="accent">Branch.</span> At each item, recurse on <em>include</em> vs <em>exclude</em>.</li>
+      <li><span class="accent">Bound.</span> Compute an upper bound on the best the subtree could produce.</li>
+      <li><span class="accent">Prune.</span> If bound ≤ current best, skip the whole subtree.</li>
+    </ol>
+  </div>
+  <p class="small" style="margin-top:1em;">
+    Items are pre-sorted by <span class="highlight">value / weight</span> descending,
+    so the <em>include</em> branch is always the greedy guess —
+    it finds a strong incumbent fast, which makes the bound tighter and prunes harder.
+  </p>
+  <aside class="notes">
+    The whole idea is: never expand a subtree we can prove won't beat what we already have.
+    Three parts. Branch = the decision tree. Bound = an optimistic estimate of what's
+    possible from here. Prune = cut whole subtrees. The sorting is the trick — it makes
+    the greedy choice the first thing we try, so we have a strong incumbent quickly,
+    which makes the bound condition fire more often.
+  </aside>
+</section>
+
+<!-- ============================== 6. DECISION TREE PICTURE ============================== -->
+<section>
+  <h2>B&amp;B Decision Tree — On Our Tiny Instance</h2>
+  <img src="../bb_decision_tree.png" class="chart" alt="Annotated B&B decision tree">
+  <p class="tiny" style="margin-top:0.5em;">
+    Out of <span class="warn">16</span> possible subsets, B&amp;B visits
+    <span class="ok">9 nodes</span> — 3 pruned by bound, 2 by infeasibility.
+    The best feasible solution <span class="ok">B+C = 22</span> is found early
+    and powers the rest of the pruning.
+  </p>
+  <aside class="notes">
+    Walk left to right. We try include-A first (greedy), then include-B, hit a value of 20
+    quickly. Then under A=0, B=1, C=1 we find value 22 — that's our incumbent. Now look at
+    the red nodes: they're not explored because their LP-relaxation upper bound is already
+    ≤ 22, so there's no way they can beat it. The orange nodes are infeasible — over
+    capacity. We've reduced 16 subsets to 9 explored nodes. At n=25 the reduction is
+    closer to a million-to-one. Next slide.
+  </aside>
+</section>
+
+<!-- ============================== 7. THE BOUND ============================== -->
+<section>
+  <h2>The Bound: LP Relaxation</h2>
+  <p class="small">Relax <em>x<sub>i</sub></em> ∈ {0,1} → <em>x<sub>i</sub></em> ∈ [0,1]. The fractional knapsack has a closed-form greedy answer.</p>
+
+  <pre><code class="language-python" data-trim>def upper_bound(level, cur_weight, cur_value):
+    bound = cur_value
+    rem = capacity - cur_weight
+    for i in range(level, n):
+        if w[i] &lt;= rem:           # take the whole item
+            bound += v[i]
+            rem -= w[i]
+        else:                      # take a fraction of the next item
+            bound += v[i] * rem / w[i]
+            break
+    return bound</code></pre>
+
+  <p class="tiny">Items already sorted by value/weight, so this greedy fill <em>is</em> the LP optimum.
+  Floor of the bound is still valid for integers — that's why ASM can do this in pure integer math, no FPU.</p>
+  <aside class="notes">
+    Why this bound? Because it's tight AND fast. Tight: the LP relaxation is the tightest
+    polynomial bound we know. Fast: with sorted items, it's a single O(n) sweep. The
+    integer-floor trick is what lets the ASM version stay in integer registers — no
+    floating point at all.
+  </aside>
+</section>
+
+<!-- ============================== 8. PRUNING EFFECTIVENESS ============================== -->
+<section>
+  <h2>How Much Does Pruning Actually Save?</h2>
+  <img src="../pruning_effectiveness.png" class="chart" alt="2^n vs nodes explored">
+  <p class="tiny" style="margin-top:0.5em;">
+    At n=25, the brute force search has <span class="warn">33 million</span> subsets;
+    B&amp;B visits only a few dozen.
+    That's <span class="highlight">less than 0.0001%</span> of the tree.
+  </p>
+  <aside class="notes">
+    This is the punchline of the bound. Left chart: brute force in red versus what B&amp;B
+    actually touches in green, log scale. The gap is enormous and grows with n. Right
+    chart: the same data expressed as a percentage. At n=25 we touch under a thousandth
+    of one percent of the search space. THIS is why B&amp;B works at scale.
+  </aside>
+</section>
+
+<!-- ============================== 9. THREE LANGUAGES ============================== -->
+<section>
+  <h2>Same Algorithm, Three Languages</h2>
+
+  <pre><code class="language-cpp" data-trim data-line-numbers>void branch(int level, int cw, int cv) {
+    if (cv &gt; best) { best = cv; ... }
+    if (level == N) return;
+    if (upper_bound(level, cw, cv) &lt;= best) return;   // PRUNE
+
+    if (cw + W[level] &lt;= CAP)                          // INCLUDE
+        branch(level+1, cw + W[level], cv + V[level]);
+    branch(level+1, cw, cv);                            // EXCLUDE
+}</code></pre>
+
+  <p class="tiny">Python and C++ are line-for-line equivalent.
+  The x86-64 ASM uses the Win64 ABI and recurses via <code>call</code>/<code>ret</code> — r12/r13 hold the sorted arrays,
+  ebx holds the running incumbent, the bound is computed inline in pure integer math.</p>
+  <aside class="notes">
+    Same algorithm, same shape in all three languages. That's deliberate — it lets us
+    isolate the language overhead from the algorithm overhead. The ASM version was the
+    most fun: I used callee-saved registers as "globals" for the search state, and
+    recursed using the real call stack. The bound computation is all integer division.
+  </aside>
+</section>
+
+<!-- ============================== 10. ALGORITHMIC WIN ============================== -->
+<section>
+  <h2>Algorithmic Win: B&amp;B vs Brute Force</h2>
+  <img src="../bb_vs_brute_force_speedup.png" class="chart" alt="B&B speedup over brute force per language">
+  <p class="tiny" style="margin-top:0.5em;">
+    Python at n=25: <span class="warn">102 s</span> → <span class="ok">96 μs</span> —
+    over <span class="highlight">1,000,000× faster</span>.
+    Same answer (1153). Same machine. Just a better algorithm.
+  </p>
+  <aside class="notes">
+    This is the big number. A million times faster, just from a smarter algorithm —
+    no change in hardware, no change in language. The languages all benefit, because the
+    algorithm wins are independent of the language wins. Note the log scale.
+  </aside>
+</section>
+
+<!-- ============================== 11. LANGUAGE WIN ============================== -->
+<section>
+  <h2>3-Way B&amp;B: Python vs C++ vs ASM</h2>
+  <img src="../benchmark_bb_comparison.png" class="chart" alt="3-way B&B benchmark comparison">
+  <p class="tiny" style="margin-top:0.3em;">
+    Across n = 3 … 25, C++ averages ~13× faster than Python; hand-tuned x86-64 ASM averages ~52× over Python and ~3× over C++.
+  </p>
+  <aside class="notes">
+    Now within B&amp;B, look at language. The relative ranking is consistent: ASM beats
+    C++ beats Python. ASM's edge over C++ is modest — ~3× — and comes from avoiding the
+    function-call overhead and keeping the search state in registers. Whether that's
+    worth maintaining hand-written assembly is a separate question — but it cleanly
+    quantifies the ceiling.
+  </aside>
+</section>
+
+<!-- ============================== 12. CONNECTION TO PROJECT ============================== -->
+<section>
+  <h2>Connection to My Capstone</h2>
+  <div class="two-col">
+    <div class="small">
+      <h3>Logistics ILP</h3>
+      <ul>
+        <li>Driver-to-region binary ILP</li>
+        <li>Modeled in PuLP, solved with CBC</li>
+        <li class="highlight">CBC <em>is</em> a Branch &amp; Bound solver</li>
+        <li>Knapsack is its <em>didactic sibling</em></li>
+      </ul>
+    </div>
+    <div class="small">
+      <h3>LLM Track</h3>
+      <ul>
+        <li>Hand-built solvers (this work) vs LLM-generated code</li>
+        <li>Knapsack is the right testbed: small, well-defined, <em>has ground truth</em></li>
+        <li>Brute-force ↔ B&amp;B comparison shows the algorithmic gap an LLM must learn to close</li>
+      </ul>
+    </div>
+  </div>
+  <p class="tiny" style="margin-top:1em;">
+    The lesson: <span class="highlight">algorithmic choice dominates language choice</span>.
+    A million× win from B&amp;B; a 50× win from ASM. Both matter — but you can't out-engineer an exponential.
+  </p>
+  <aside class="notes">
+    Here's the bridge to the capstone. The driver-to-region problem is an integer linear
+    program — binary x[d,r], cost-minimizing objective, eligibility and coverage
+    constraints. When I write prob.solve() in PuLP, it hands the problem to CBC. CBC
+    IS Branch and Bound — with cuts and heuristics on top, but the spine is B&amp;B.
+    On the LLM track, knapsack is the right testbed because it's small, well-defined, and
+    we have ground truth from this work. If I ask an LLM to write a knapsack solver, I
+    can measure whether it found B&amp;B or just brute force.
+  </aside>
+</section>
+
+<!-- ============================== 13. CAPSTONE PIPELINE ============================== -->
+<section>
+  <h2>Where B&amp;B Fits in the Capstone</h2>
+  <img src="../project_pipeline.png" class="chart" alt="Capstone pipeline showing B&B inside CBC">
+  <p class="tiny" style="margin-top:0.3em;">
+    Production track and research track both pass through the same algorithm family.
+  </p>
+  <aside class="notes">
+    Top row is production: CSV in, PuLP model, CBC solver, assignments out. Bottom row
+    is the research track I've been building this term: knapsack instances, brute force
+    baseline, B&amp;B implementation, verified speedup. The orange box in the middle
+    — same algorithm family. The reason this work isn't a side quest is that I'm
+    studying the engine I'm depending on.
+  </aside>
+</section>
+
+<!-- ============================== 14. TAKEAWAYS ============================== -->
+<section>
+  <h2>Takeaways</h2>
+  <ul class="small" style="line-height:1.7;">
+    <li><span class="ok">Brute force</span> is a useful baseline — and a clear demonstration of why we need smarter algorithms.</li>
+    <li><span class="ok">B&amp;B</span> uses an LP-relaxation bound to prune the search tree: correct, optimal, dramatically faster.</li>
+    <li><span class="ok">Same algorithm in 3 languages</span> isolates language overhead from algorithm overhead — the speedups multiply independently.</li>
+    <li><span class="ok">Connection:</span> the ILP solvers I use for logistics assignment are B&amp;B under the hood. Understanding B&amp;B = understanding the tools.</li>
+  </ul>
+  <p style="margin-top:2em;" class="accent">Questions?</p>
+  <div class="footer-note">github.com/PeterKamau24/CS495-Logistics-Optimization-LLM</div>
+  <aside class="notes">
+    Close with the three takeaways. Brute force is the baseline that makes the win
+    measurable. B&amp;B uses a clever bound to prune. Same algorithm in three languages
+    cleanly separates the two dimensions. And the connection — this is the engine of CBC,
+    which is the engine of my capstone. Open the floor.
+
+    Likely questions:
+    - "Why not dynamic programming?" — DP is pseudo-polynomial in capacity, great when
+      capacity is small, but for the LP-ILP connection B&amp;B is the right thing to study.
+    - "Does the LLM track use this?" — yes, for evaluation: same instances, compare
+      LLM-generated solvers against this baseline.
+    - "Why ASM?" — partly to quantify the ceiling, partly because the capstone has a
+      language-comparison angle.
+  </aside>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/plugin/highlight/highlight.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/plugin/notes/notes.js"></script>
+
+<script>
+  Reveal.initialize({
+    hash: true,
+    slideNumber: 'c/t',
+    transition: 'slide',
+    plugins: [ RevealHighlight, RevealNotes ],
+  });
+</script>
+
+</body>
+</html>
