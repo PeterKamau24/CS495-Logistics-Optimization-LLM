@@ -52,7 +52,7 @@ def benchmark_cpp(instance_file: str, n_runs: int = 3) -> Dict:
     times = []
     for _ in range(n_runs):
         result = subprocess.run(
-            ['./src/knapsack_brute_force_cpp'],
+            ['./src/knapsack_brute_force_cpp.exe'],
             capture_output=True,
             text=True,
             timeout=300
@@ -71,15 +71,15 @@ def benchmark_cpp(instance_file: str, n_runs: int = 3) -> Dict:
     }
 
 
-def parse_asm_time(output: str, instance_name: str) -> float:
-    """Parse Assembly output to extract computation time for specific instance."""
-    in_instance = False
-    for line in output.split('\n'):
-        if f"Solving instance: {instance_name}" in line or instance_name.split('/')[-1] in line:
-            in_instance = True
-        elif in_instance and "Computation time:" in line:
-            time_str = line.split("Computation time:")[1].strip().split()[0]
-            return float(time_str)
+def parse_asm_output(output: str) -> float:
+    """Parse Assembly output: a single line with '<value> <time>'."""
+    line = output.strip().splitlines()[-1] if output.strip() else ""
+    parts = line.split()
+    if len(parts) >= 2:
+        try:
+            return float(parts[1])
+        except ValueError:
+            return 0.0
     return 0.0
 
 
@@ -91,12 +91,12 @@ def benchmark_assembly(instance_file: str, n_runs: int = 3) -> Dict:
     times = []
     for _ in range(n_runs):
         result = subprocess.run(
-            ['./src/knapsack_brute_force_asm'],
+            ['./notebooks/knapsack_asm.exe', instance_file],
             capture_output=True,
             text=True,
             timeout=300
         )
-        asm_time = parse_asm_time(result.stdout, instance_file)
+        asm_time = parse_asm_output(result.stdout)
         if asm_time > 0:
             times.append(asm_time)
 
@@ -224,14 +224,13 @@ def save_results(results: List[Dict], output_file: str = 'benchmark_results_all_
 
 if __name__ == "__main__":
     # Check executables exist
-    if not os.path.exists('./src/knapsack_brute_force_cpp'):
+    if not os.path.exists('./src/knapsack_brute_force_cpp.exe'):
         print("Error: C++ executable not found. Please compile first:")
-        print("  g++ -std=c++17 -O3 -o src/knapsack_brute_force_cpp src/knapsack_brute_force.cpp")
+        print("  g++ -std=c++17 -O3 -o src/knapsack_brute_force_cpp.exe src/knapsack_brute_force.cpp")
         exit(1)
 
-    if not os.path.exists('./src/knapsack_brute_force_asm'):
-        print("Error: Assembly executable not found. Please build first:")
-        print("  ./src/build_asm.sh")
+    if not os.path.exists('./notebooks/knapsack_asm.exe'):
+        print("Error: Assembly executable not found at ./notebooks/knapsack_asm.exe")
         exit(1)
 
     # Run benchmark
