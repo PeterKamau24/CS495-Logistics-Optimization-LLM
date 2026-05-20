@@ -11,12 +11,24 @@ CS495 capstone project on integer optimization for logistics, with a companion t
 
 ## Commands
 
+If GNU Make and Poetry are installed:
+
 ```bash
 make setup        # poetry install
 make test         # poetry run pytest    (7 tests, currently all passing)
 make lint         # poetry run ruff check .
 make run          # python src/main.py   (argparse dispatcher with subcommands)
 make clean        # remove .pytest_cache and __pycache__
+```
+
+Without Make (Windows / plain pip):
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -e .
+pytest -v
+python src/main.py --help
 ```
 
 Common dispatched commands:

@@ -35,10 +35,22 @@ Full numbers in [`docs/final_report.md`](docs/final_report.md) and [`results/exp
 
 ## Setup
 
+If you have GNU Make and Poetry installed:
+
 ```bash
 make setup       # poetry install
 make test        # poetry run pytest   (7 tests, all passing)
 make lint        # poetry run ruff check .
+```
+
+### Without Make (Windows / plain pip)
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -e .
+pytest -v
+python src/main.py --help
 ```
 
 ## CLI
