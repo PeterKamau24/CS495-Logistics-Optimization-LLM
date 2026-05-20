@@ -8,3 +8,10 @@ venv/
 Thumbs.db
 results/figures/*.png
 results/tables/*.csv
+
+# Build artifacts
+*.obj
+*.exe
+
+# Claude Code local state
+.claude/
