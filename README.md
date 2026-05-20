@@ -93,3 +93,4 @@ python -m http.server 8000
 ## Author
 
 Peter Kamau — Bellevue College, CS495
+Instructor: Prof. Dr. Pedro Albuquerque

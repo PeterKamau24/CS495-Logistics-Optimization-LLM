@@ -2,6 +2,7 @@
 
 **Title:** Integer Optimization for Logistics Assignment, with a Three-Language Branch & Bound Study
 **Author:** Peter Kamau
+**Instructor:** Prof. Dr. Pedro Albuquerque
 **Course:** CS495 Capstone in Data Science — Bellevue College
 **Date:** May 2026
 
