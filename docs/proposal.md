@@ -1,24 +1,30 @@
 # Capstone Proposal
 
 ## Project Title
-Integer Optimization under LLM Low Language Levels for Logistics Assignment
+
+Integer Optimization for Logistics Assignment, with a Three-Language Branch & Bound Study
 
 ## Project Summary
-This project focuses on building a logistics assignment system using integer optimization. The system will assign drivers to delivery regions while satisfying constraints such as availability, coverage, and workload balance. In addition to building a hand-coded optimization model, the project will explore whether an LLM can assist in generating parts of the model or implementation.
+
+This project builds a binary integer linear program for driver-to-region assignment and complements it with a study of the Branch & Bound algorithm that powers the underlying solver. To make B&B concrete and measurable, the project implements it on the 0-1 knapsack problem in three languages — Python, C++, and x86-64 assembly — and benchmarks each against a brute-force baseline.
+
+A secondary research direction (not completed in the current iteration) is whether large language models can generate correct, efficient solver code. The hand-built B&B implementations serve as ground truth for that future comparison.
 
 ## Motivation
-The project is motivated by real logistics assignment problems where poor decisions can cause delays, imbalance, and inefficiency. Integer optimization is a natural method for solving structured assignment problems. This project also explores whether LLM support is practical for technical optimization work.
+
+Real logistics assignments are integer programming problems: binary decisions, capacity and coverage constraints, a cost objective. Production-grade solvers — PuLP, COIN-CBC — handle these via Branch & Bound. Studying B&B directly is therefore studying the engine the production track depends on. Holding the algorithm fixed across three languages then isolates implementation overhead from algorithmic overhead.
 
 ## Goals
-- build a working optimization model
-- create a realistic dataset
-- compare manual and LLM-assisted model generation
-- evaluate assignment quality and correctness
+
+- Build a working ILP for driver-to-region assignment (PuLP / CBC)
+- Implement and verify B&B on the 0-1 knapsack in three languages
+- Benchmark B&B against brute force across n = 3…25 to quantify the algorithmic speedup
+- Establish a pytest-verified ground truth for a future LLM-generated-solver comparison
 
 ## Deliverables
-- Python code
-- dataset
-- optimization model
-- evaluation results
-- final report
-- presentation
+
+- Source code for the ILP and the three B&B implementations
+- A pytest suite verifying both solvers against known-answer instances (`tests/test_knapsack.py`)
+- Reveal.js presentation (`notebooks/presentation_bb.html`)
+- Benchmark JSON, plots, and a tabulated summary (`results/experiment_summary.md`)
+- Final report (`docs/final_report.md`)

@@ -59,21 +59,31 @@ KnapsackInstance read_knapsack_instance(const string& filepath) {
     }
     file.close();
 
-    if (lines.size() < 3) {
-        cerr << "Error: Invalid file format" << endl;
+    // Accept either 3-line (n capacity / weights / values) or 4-line
+    // (n / weights / values / capacity) input format.
+    if (lines.size() == 4) {
+        instance.n_items = stoi(lines[0]);
+        istringstream issW(lines[1]);
+        int w;
+        while (issW >> w) instance.weights.push_back(w);
+        istringstream issV(lines[2]);
+        int v;
+        while (issV >> v) instance.values.push_back(v);
+        instance.capacity = stoi(lines[3]);
+    } else if (lines.size() == 3) {
+        istringstream iss0(lines[0]);
+        iss0 >> instance.n_items >> instance.capacity;
+        istringstream issW(lines[1]);
+        int w;
+        while (issW >> w) instance.weights.push_back(w);
+        istringstream issV(lines[2]);
+        int v;
+        while (issV >> v) instance.values.push_back(v);
+    } else {
+        cerr << "Error: expected 3 or 4 non-empty lines in " << filepath
+             << ", got " << lines.size() << endl;
         exit(1);
     }
-
-    istringstream iss0(lines[0]);
-    iss0 >> instance.n_items >> instance.capacity;
-
-    istringstream iss1(lines[1]);
-    int weight;
-    while (iss1 >> weight) instance.weights.push_back(weight);
-
-    istringstream iss2(lines[2]);
-    int value;
-    while (iss2 >> value) instance.values.push_back(value);
 
     if ((int)instance.weights.size() != instance.n_items ||
         (int)instance.values.size()  != instance.n_items) {

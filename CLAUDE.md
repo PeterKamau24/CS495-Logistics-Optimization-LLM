@@ -4,64 +4,92 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-CS495 capstone project studying integer optimization for logistics driver-to-region assignment, with a secondary track comparing hand-built solvers against LLM-assisted code generation. Two optimization problems are in scope:
+CS495 capstone project on integer optimization for logistics, with a companion three-language study of Branch & Bound. The project runs on two tracks:
 
-1. **Driver-to-region assignment** — binary ILP solved with PuLP (minimize total assignment cost, one driver per region minimum, one region per driver maximum, eligibility-filtered)
-2. **0-1 Knapsack** — modeled in Hexaly (`.hxm`), but Hexaly is not installed locally (documented blocker in PLAN.md)
+1. **Driver-to-region assignment** — binary ILP modeled in PuLP, solved with COIN-CBC. Minimizes total assignment cost subject to eligibility, at most one region per driver, at least one driver per region.
+2. **0-1 Knapsack** — Branch & Bound implemented by hand in Python, C++, and x86-64 NASM (Win64). Verified against brute-force baselines and against a PuLP reference. The PuLP/CBC engine in track 1 is itself a B&B solver, so studying B&B informs the production track.
 
 ## Commands
 
 ```bash
-# Install dependencies
-make setup        # runs: poetry install
+make setup        # poetry install
+make test         # poetry run pytest    (7 tests, currently all passing)
+make lint         # poetry run ruff check .
+make run          # python src/main.py   (argparse dispatcher with subcommands)
+make clean        # remove .pytest_cache and __pycache__
+```
 
-# Run tests
-make test         # runs: poetry run pytest
+Common dispatched commands:
 
-# Lint
-make lint         # runs: poetry run ruff check .
-
-# Run main entry point (src/main.py does not exist yet)
-make run
-
-# Clean build artifacts
-make clean
+```bash
+python src/main.py --help
+python src/main.py driver-region
+python src/main.py knapsack-pulp
+python src/main.py knapsack-bb --input data/knapsack_input.txt
 ```
 
 Run a single test file:
+
 ```bash
-poetry run pytest tests/test_optimization_model.py
+poetry run pytest tests/test_knapsack.py -v
 ```
 
-## Architecture
+## Source Layout
 
-The pipeline flows: CSV input → preprocessing → ILP model → solver → evaluation
+### Driver-Region ILP track
 
 | File | Role |
 |---|---|
-| `src/data_preprocessing.py` | Loads and validates the assignment CSV; enforces required columns `[driver_id, region_id, cost, eligible]` |
-| `src/optimization_model.py` | Builds and solves the PuLP ILP. Filters to eligible pairs only, minimizes cost, one assignment per driver (≤1), full region coverage (≥1 per region) |
-| `src/evaluation.py` | Computes metrics from solver output: total assignments, covered regions, assigned drivers |
-| `src/llm_model_generation.py` | Placeholder for LLM-assisted model generation experiments (currently stub) |
-| `src/knapsack.hxm` | Hexaly model for the 0-1 knapsack problem (alternative solver track) |
-| `data/sample_driver_region_data.csv` | Sample assignment data (4 drivers × 3 regions, with eligibility and costs) |
-| `data/knapsack_input.txt` | Knapsack instance: line 1 = n items, line 2 = weights, line 3 = values, line 4 = capacity |
+| `src/optimization_model.py` | PuLP ILP — minimizes assignment cost over eligible pairs |
+| `src/data_preprocessing.py` | Validates CSV columns `[driver_id, region_id, cost, eligible]` |
+| `src/evaluation.py` | Computes coverage and assignment metrics from solver output |
+| `data/sample_driver_region_data.csv` | 4-driver × 3-region instance with eligibility flags |
+
+### Knapsack track
+
+| File | Role |
+|---|---|
+| `src/knapsack_pulp.py` | PuLP reference solver — runs PLAN-v1 (value=11) and disaster relief (value=598) |
+| `src/knapsack_branch_bound.py` | Hand-built B&B in Python |
+| `src/knapsack_branch_bound.cpp` | Same algorithm in C++ |
+| `src/knapsack_branch_bound.asm` + `src/knapsack_bb_asm_wrapper.c` | Same algorithm in x86-64 NASM (Win64 ABI) |
+| `src/knapsack_brute_force.{py,cpp,asm}` | O(2^n) baselines on the same instances |
+| `src/benchmark_bb.py`, `src/benchmark_all_three.py` | Benchmark drivers |
+| `src/visualize_bb.py`, `src/visualize_bb_extras.py`, `src/visualize_all_three.py` | Plot generation |
+| `data/knapsack_input.txt` | Canonical 4-line instance (n / weights / values / capacity) |
+| `notebooks/instance_n*.txt` | Synthetic n = 10…25 instances in 3-line format (`n capacity` / weights / values) |
+
+The B&B Python and C++ readers accept *both* the 3-line and 4-line formats — `read_knapsack_instance` auto-detects by line count.
+
+### Entry points and tests
+
+| File | Role |
+|---|---|
+| `src/main.py` | argparse dispatcher with `driver-region`, `knapsack-pulp`, `knapsack-bb` subcommands |
+| `tests/test_knapsack.py` | pytest verification — value=11, value=598, and format-reader tests |
 
 ## Known Issues / Environment Notes
 
-- **PuLP** is used in `src/optimization_model.py` but is missing from `pyproject.toml` dependencies. Add it with `poetry add pulp` before running the optimization model.
-- **`src/main.py`** is referenced in `make run` but does not exist yet.
-- **Hexaly** is not installed; the `.hxm` model cannot be executed until Hexaly is available in PATH. Test with: `where.exe hexaly` (Windows) or `which hexaly`.
-- No tests exist yet; `make test` will pass vacuously.
+- **Hexaly** is not installed; `src/knapsack.hxm` is preserved but cannot be executed locally.
+- The **LLM-generated-solver comparison** described in PLAN.md Phase 4 is not yet implemented. The hand-built B&B suite is intended as ground truth for that future study.
+- On Windows, console output uses Unicode box-drawing characters. `src/main.py` reconfigures `sys.stdout` to UTF-8 to avoid `cp1252` encoding errors. If you call solver modules directly (not via `main.py`), expect possible encoding errors in a default cmd window.
+- `tests/` and `src/main.py` were added in May 2026 — the earlier PLAN.md sketched but did not include them.
 
-## Data Format
+## Data Formats
 
-Assignment CSV columns: `driver_id`, `region_id`, `cost`, `eligible` (1/0 flag).
+Driver-region CSV columns: `driver_id, region_id, cost, eligible` (0/1 flag).
 
-Knapsack input format (plain text, space-separated):
+Knapsack — two formats are accepted by the B&B reader:
+
 ```
+# 3-line (used by notebooks/instance_n*.txt)
+<n_items> <capacity>
+<w_1> <w_2> ... <w_n>
+<v_1> <v_2> ... <v_n>
+
+# 4-line (used by data/knapsack_input.txt — canonical)
 <n_items>
-<weight_1> <weight_2> ... <weight_n>
-<value_1> <value_2> ... <value_n>
+<w_1> <w_2> ... <w_n>
+<v_1> <v_2> ... <v_n>
 <capacity>
 ```

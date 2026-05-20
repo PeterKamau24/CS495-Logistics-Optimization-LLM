@@ -2,232 +2,266 @@
 
 ## Project Overview
 
-**Title:** LLM-Assisted Generation of Low-Level Discrete Optimization Solvers
+**Title:** Integer Optimization for Logistics Assignment, with a Three-Language Branch & Bound Study
 **Author:** Peter Kamau
 **Course:** CS495 Capstone in Data Science — Bellevue College
-**Date:** April 27, 2026
+**Date:** May 2026 (updated)
 
 ### Description
-This capstone investigates whether large language models (LLMs) can assist in generating correct, efficient, low-level implementations of discrete optimization solvers. Starting with the classical 0-1 Knapsack Problem (a binary integer programming problem), the project compares LLM-generated code against hand-written implementations and established solver libraries.
+
+This capstone investigates discrete optimization in a logistics context (driver-to-region assignment) and the algorithm that powers production ILP solvers (Branch & Bound). To make B&B measurable, it is implemented by hand on the 0-1 knapsack problem in three languages — Python, C++, and x86-64 assembly — and benchmarked against brute-force baselines. The hand-built suite serves as ground truth for a future LLM-generated-solver comparison.
 
 ### Objectives
-- Implement a verified 0-1 Knapsack solver using PuLP and demonstrate it on a real-world scenario
-- Use Claude CLI as an active participant in the code generation and planning workflow
-- Establish a baseline optimal solution to use as ground truth for future solver comparisons
-- Compare PuLP, hand-written branch-and-bound, and LLM-generated low-level solver implementations
+
+- Build a binary ILP for driver-to-region assignment (PuLP / CBC)
+- Verify a PuLP knapsack model against a hand-computed instance (value=11)
+- Implement Branch & Bound for 0-1 knapsack in Python, C++, and x86-64 NASM
+- Benchmark B&B vs brute force across n = 3…25 in all three languages
+- Lay the groundwork (verified solvers, pytest suite, benchmark instances) for a future LLM-vs-hand comparison
 
 ---
 
 ## Environment Setup
 
 ### Requirements
-- Python 3.13
-- Poetry (or pip + venv) for dependency management
-- Virtual environment (.venv)
-- Git
+
+- Python 3.11+ (project uses 3.13 / 3.14)
+- Poetry for dependency management (pip + venv fallback in `requirements.txt`)
+- A C++ compiler (MSVC or g++) and NASM for the C++/ASM tracks
 
 ### Quick Start (Windows — primary)
+
 ```powershell
-# Install prerequisites
+# Install prerequisites (one-time)
 winget install OpenJS.NodeJS.LTS
 winget install Python.Python.3.13
 
-# Install Claude CLI
+# Install Claude Code (optional)
 npm install -g @anthropic-ai/claude-code
 
 # Clone and set up project
-git clone https://github.com/YOUR_USER/YOUR_REPO.git
-cd YOUR_REPO
+git clone https://github.com/PeterKamau24/CS495-Logistics-Optimization-LLM.git
+cd CS495-Logistics-Optimization-LLM
 python -m venv .venv
 .venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-
-# Launch Claude
-claude
+pip install -e .
+pytest -v
 ```
 
-### Quick Start (macOS / Linux)
+### Makefile Targets
+
 ```bash
-# Install Node.js + Python (macOS)
-brew install node python@3.13
-
-# Install Claude CLI
-npm install -g @anthropic-ai/claude-code
-
-# Clone and set up project
-git clone https://github.com/YOUR_USER/YOUR_REPO.git
-cd YOUR_REPO
-python3.13 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-make test
-
-# Launch Claude
-claude
-```
-
-### Makefile Alternative (Windows)
-If `make` is not available on Windows, run the equivalent commands directly:
-```powershell
-python -m pytest tests/        # replaces: make test
-python -m ruff check .         # replaces: make lint
-python src/main.py             # replaces: make run
+make setup    # poetry install
+make test     # poetry run pytest         (7 tests, all passing)
+make lint     # poetry run ruff check .
+make run      # python src/main.py        (dispatcher)
+make clean    # remove .pytest_cache, __pycache__
 ```
 
 ### Dependencies
+
+Pinned in `pyproject.toml`:
+
 - `pulp` — linear/integer programming modeling library
+- `pandas`, `numpy`, `matplotlib`, `scikit-learn` — analysis and visualization
 - `pytest` — unit testing framework
-- `ruff` — fast Python linter
-- `numpy` — numerical operations (future iterations)
-- `pandas` — data manipulation (future iterations)
 
 ---
 
 ## Architecture
 
 ```
-my-capstone-project/
+CS495-Logistics-Optimization-LLM/
   PLAN.md                       # This file
   README.md                     # Project description
+  CLAUDE.md                     # Codebase guide for Claude Code
   Makefile                      # Automation commands
-  pyproject.toml                # Poetry config & dependencies
-  requirements.txt              # Pip fallback
-  .gitignore                    # Ignore .venv, __pycache__, etc.
+  pyproject.toml                # Poetry config + dependencies + pytest config
   src/
-    __init__.py
-    main.py                     # Entry point
-    knapsack_pulp.py            # Core PuLP 0-1 knapsack solver
+    main.py                     # argparse dispatcher entry point
+    optimization_model.py       # Driver-region PuLP ILP
+    data_preprocessing.py       # CSV loading and validation
+    evaluation.py               # Coverage/assignment metrics
+    knapsack_pulp.py            # PuLP reference solver for 0-1 knapsack
+    knapsack_branch_bound.{py,cpp,asm}   # Hand-built B&B in three languages
+    knapsack_bb_asm_wrapper.c   # C glue for the ASM B&B
+    knapsack_brute_force.{py,cpp,asm}    # O(2^n) baselines for comparison
+    benchmark_bb.py             # Benchmark driver — B&B sweep
+    benchmark_all_three.py      # Benchmark driver — three-language brute force
+    visualize_bb.py, visualize_bb_extras.py, visualize_all_three.py
   tests/
-    test_knapsack.py            # Verifies PLAN.md instance (value=11)
+    test_knapsack.py            # PLAN-v1 (value=11) + disaster relief (value=598) + reader
   data/
-    raw/
-      knapsack_input.txt        # Original PLAN.md test instance
-    processed/                  # Cleaned data (future iterations)
+    sample_driver_region_data.csv
+    knapsack_input.txt          # PLAN-v1 instance, 4-line format
   notebooks/
-    exploration.ipynb           # EDA and experimentation
+    01_data_exploration.ipynb
+    knapsack_benchmark.ipynb
+    knapsack_benchmark_3way.ipynb
+    instance_n{10,15,20,22,25}.txt   # Synthetic instances, 3-line format
+    presentation_bb.html        # 14-slide reveal.js deck
+  docs/
+    proposal.md, final_report.md, presentation_notes.md
+  results/
+    experiment_summary.md       # Tabulated benchmark results
 ```
 
 ---
 
 ## Tasks
 
-### Phase 1: Environment & Setup
-- [x] Install Python 3.13 and create virtual environment (.venv)
+### Phase 1: Environment & Setup — Complete
+
+- [x] Install Python and create virtual environment (.venv)
 - [x] Install PuLP via pip and verify import works
 - [x] Install Claude CLI and authenticate
 - [x] Initialize Git repository and connect to GitHub
-- [ ] Create Makefile with setup, test, lint, run, clean targets
-- [ ] Create pyproject.toml with Poetry configuration
+- [x] Create Makefile with setup, test, lint, run, clean targets
+- [x] Create pyproject.toml with Poetry configuration + pytest config
 
-### Phase 2: Core Solver (Iteration 2 — Complete)
-- [x] Write PuLP 0-1 Knapsack model matching Hexaly structure from PLAN v1
-- [x] Verify PLAN v1 test instance: value=11 confirmed
+### Phase 2: Core Solvers — Complete
+
+- [x] Write PuLP 0-1 Knapsack model matching original Hexaly structure
+- [x] Verify PLAN-v1 test instance: value=11 confirmed
 - [x] Design real-world disaster relief scenario and 10-item dataset
 - [x] Run solver on disaster relief instance — optimal value=598
-- [x] Write unit test in tests/test_knapsack.py using pytest
+- [x] Write driver-to-region ILP in PuLP (`src/optimization_model.py`)
+- [x] Sample CSV produces optimal cost=13 with full coverage
+- [x] Write `tests/test_knapsack.py` covering both instances and the format-reader
+- [x] Add `src/main.py` argparse dispatcher so `make run` works end-to-end
 
-### Phase 3: Expansion & Analysis
-- [ ] Test solver on OR-Library benchmark instances
-- [ ] Add parameterized pytest cases for edge cases
-- [ ] Measure solve time as function of instance size (n = 10 to 500)
-- [ ] Plot solve time vs. instance size using matplotlib
-- [ ] Attempt Hexaly installation to run original PLAN v1 model
+### Phase 3: Hand-Built Three-Language B&B — Complete
 
-### Phase 4: LLM Solver Generation
-- [ ] Prompt Claude CLI to generate a branch-and-bound solver in Python
-- [ ] Evaluate LLM-generated solver against PuLP baseline for correctness
-- [ ] Prompt Claude CLI to generate a C++ knapsack solver
-- [ ] Benchmark C++ solver vs. PuLP on large instances
+- [x] Implement Branch & Bound in Python
+- [x] Implement Branch & Bound in C++
+- [x] Implement Branch & Bound in x86-64 NASM (Win64 ABI, integer-floor bound)
+- [x] Implement brute-force baselines in Python, C++, and ASM
+- [x] Generate synthetic instances n = 10, 15, 20, 22, 25
+- [x] Benchmark B&B vs brute force, all three languages
+- [x] Plot algorithmic speedup, language speedup, and pruning effectiveness
+- [x] Verify B&B matches PuLP on PLAN-v1 (value=11) and disaster relief (value=598) via pytest
+- [x] Make the knapsack reader auto-detect 3-line and 4-line formats
+
+### Phase 4: LLM Solver Generation — Not Started
+
+- [ ] Prompt Claude to generate a knapsack solver from a problem statement
+- [ ] Evaluate LLM-generated solver against the hand-built B&B baseline for correctness
+- [ ] Prompt Claude to generate a C++ knapsack solver
+- [ ] Benchmark LLM-generated solvers on the existing n = 10…25 instances
 - [ ] Document all prompts used and quality of generated code
 
-### Phase 5: Capstone Writeup
-- [ ] Write PLAN_V3.md after class feedback
-- [ ] Produce final comparison report: Hexaly vs. PuLP vs. LLM solvers
-- [ ] Record demo video showing Claude CLI in the workflow
-- [ ] Push all code, tests, and documentation to GitHub
+### Phase 5: Capstone Writeup — Mostly Complete
+
+- [x] Final report (`docs/final_report.md`) with motivation, methods, results, conclusions
+- [x] Experiment summary (`results/experiment_summary.md`) with tabulated benchmarks
+- [x] 14-slide reveal.js presentation (`notebooks/presentation_bb.html`) with embedded speaker notes
+- [x] Push all code, tests, and documentation to GitHub
+- [ ] Record demo video showing CLI in the workflow
 - [ ] Submit final capstone deliverable on Canvas
 
-**Total tasks: 25  |  Completed: 9  |  Remaining: 16**
+### Phase 6: Stretch / Future Work — Optional
+
+- [ ] Test solver on OR-Library benchmark instances
+- [ ] Add parameterized pytest cases for edge cases (n=0, capacity=0, single oversized item)
+- [ ] Scale driver-region instance to a realistic size and measure CBC solve time
+- [ ] Attempt Hexaly installation to run the original `.hxm` model
+
+**Phase progress: 5/6 phases complete or mostly complete. The LLM-generation phase remains for a future iteration.**
 
 ---
 
 ## Methods
 
 ### Optimization Modeling
-- **PuLP** — Python LP/IP modeling library
-- **COIN-BC (PULP_CBC_CMD)** — open-source branch-and-cut solver
-- Problem type: Binary Integer Program (LpBinary variables, LpMaximize sense)
 
-### Mathematical Formulation
-- Decision variables: `x_i ∈ {0, 1}` for each item i
+- **PuLP** — Python LP/IP modeling library
+- **COIN-CBC (PULP_CBC_CMD)** — open-source branch-and-cut solver, which is itself a Branch & Bound implementation
+- Driver-region ILP: binary variables, cost minimization, eligibility/coverage constraints
+- Knapsack: binary variables, value maximization, single capacity constraint
+
+### Mathematical Formulation — Knapsack
+
+- Decision variables: `x_i ∈ {0,1}` for each item i
 - Objective: `maximize Σ v_i · x_i`
 - Constraint: `Σ w_i · x_i ≤ W`
 
-### Future Solvers (for comparison)
-- Hand-written branch-and-bound in Python
-- Hand-written branch-and-bound in C++
-- LLM-generated solvers (Claude CLI)
-- Hexaly (commercial solver, if installation succeeds)
+### Hand-Built B&B Algorithm
+
+- Items pre-sorted by `value/weight` ratio descending
+- DFS over the binary include/exclude tree, include tried first
+- Bound = LP relaxation (fractional knapsack)
+- Prune when bound ≤ current incumbent
 
 ### Evaluation Metrics
-- **Correctness** — does the solver find the proven optimal value?
-- **Solve time** — wall-clock time vs. instance size
-- **Code quality** — readability, lines of code, test coverage
+
+- **Correctness** — solver returns proven optimal value (vs hand-computed or PuLP ground truth)
+- **Solve time** — wall-clock, single-run, on the same machine
+- **Pruning effectiveness** — nodes explored vs 2^n
 
 ### Visualization
-- Matplotlib for solve-time scaling plots
-- Markdown tables for comparison results
+
+- Matplotlib for benchmark plots; reveal.js for the presentation deck
 
 ---
 
 ## Data Sources
 
-### Iteration 2 Test Instance (PLAN v1)
-- **Source:** Hand-constructed in original PLAN.md (Iteration 1)
-- **Weights:** [4, 3, 2] kg
-- **Values:** [8, 5, 6]
-- **Capacity:** 5 kg
-- **Optimal value:** 11 (items 2 and 3 selected)
-- **Purpose:** Hand-checkable verification baseline
+### PLAN-v1 small instance (hand-checkable)
 
-### Real-World Instance — Disaster Relief
-- **Source:** Scenario designed by author based on publicly documented humanitarian relief priorities (UNHCR, Red Cross emergency supply guidelines)
-- **Items:** 10 emergency supplies with weights (kg) and impact scores
-- **Capacity:** 50 kg (helicopter weight limit)
-- **Optimal value:** 598 (8 of 10 items selected, 50/50 kg used)
+- Weights: `[4, 3, 2]` kg
+- Values: `[8, 5, 6]`
+- Capacity: 5 kg
+- Optimal: **11** (items 2 and 3)
+- File: `data/knapsack_input.txt`
 
-### Future Data Sources
-- **OR-Library** — Brunel knapsack benchmarks: http://people.brunel.ac.uk/~mastjjb/jeb/orlib/knapinfo.html
-- **Pisinger's instances** — large-scale academic benchmarks
-- **Custom generated instances** — for scaling analysis (n = 10, 50, 100, 500 items)
+### Real-world disaster relief instance
+
+- 10 emergency supplies, helicopter capacity 50 kg
+- Optimal: **598** (8 of 10 items selected, 50/50 kg used)
+- Code: `src/knapsack_pulp.py`
+
+### Synthetic scaling instances
+
+- n = 10, 15, 20, 22, 25 items
+- Random integer weights and values
+- Files: `notebooks/instance_n{10,15,20,22,25}.txt`
+
+### Driver-region sample
+
+- 4 drivers × 3 regions, eligibility-filtered cost matrix
+- Optimal cost: **13**
+- File: `data/sample_driver_region_data.csv`
 
 ---
 
 ## Testing Strategy
 
-- **Unit tests** with pytest in `tests/test_knapsack.py`
-- **Verification test:** assert solver returns value=11 for PLAN v1 instance
-- **Edge cases (planned):** empty item set, capacity=0, single item exceeds capacity
-- **Parameterized tests (planned):** OR-Library benchmark instances with known optimal values
-- **Run tests:** `pytest tests/` or `make test`
+- **pytest** in `tests/test_knapsack.py` (configured via `[tool.pytest.ini_options]` in `pyproject.toml`)
+- 7 tests, all passing:
+  - PuLP returns value=11 on PLAN-v1
+  - PuLP returns value=598 on disaster relief
+  - B&B returns value=11 on PLAN-v1
+  - B&B returns value=598 on disaster relief
+  - Reader accepts the 3-line format
+  - Reader accepts the 4-line format
+  - Reader rejects malformed input
+- Run with `make test` or `pytest -v`
 
 ---
 
 ## Timeline
 
-| Week | Dates | Milestone | Deliverable |
-|------|-------|-----------|-------------|
-| Week 1 | Apr 21–27 | Iteration 1 — Hexaly model prepared, blocker identified | PLAN.md (v1) |
-| Week 2 | Apr 28–May 4 | Iteration 2 — PuLP solver complete, real-world results verified | **PLAN.md (this) + knapsack_pulp.py — DUE MAY 4** |
-| Week 3 | May 5–11 | Environment hardened — Makefile, Poetry, pytest suite | Makefile, pyproject.toml |
-| Week 4 | May 12–18 | OR-Library benchmarks — scaling analysis and plots | benchmark.py, solve_time_plot.png |
-| Week 5 | May 19–25 | LLM solver generation — Claude generates branch-and-bound | llm_solver.py, prompt_log.md |
-| Week 6 | May 26–Jun 1 | C++ solver — Claude generates, compile and benchmark | knapsack.cpp, comparison table |
-| Week 7 | Jun 2–8 | Full comparison — Hexaly vs PuLP vs LLM solvers | PLAN_V3.md, comparison_report.md |
-| Week 8 | Jun 9–15 | Capstone writeup, demo video, final polish | Final submission on Canvas + GitHub |
+| Week | Dates | Milestone |
+|------|-------|-----------|
+| Week 1 | Apr 21–27 | Hexaly model prepared, blocker identified |
+| Week 2 | Apr 28–May 4 | PuLP solver complete, disaster relief verified |
+| Week 3 | May 5–11 | Hand-built three-language B&B complete (Python, C++, ASM) |
+| Week 4 | May 12–18 | Brute-force baselines, three-language benchmarks, plots |
+| Week 5 | May 19–25 | Reveal.js deck, final report, test suite, repo cleanup |
+| Week 6+ | (future) | LLM-generated-solver comparison; demo video; final submission |
 
 ---
 
 ## One-Sentence Summary
 
-In this iteration, Claude read the original PLAN.md, resolved the Hexaly environment blocker by implementing an equivalent 0-1 Knapsack solver in PuLP, verified the model against the original hand-checked instance (value=11), applied it to a real-world disaster relief scenario producing an optimal result (value=598), and produced this fully structured PLAN.md covering all required capstone sections.
+This capstone implements a driver-to-region binary ILP in PuLP and complements it with a hand-built three-language (Python, C++, x86-64 ASM) Branch & Bound study of 0-1 knapsack, verified against PuLP ground truth and benchmarked against brute force, demonstrating that algorithmic choice (~10^6× from B&B) dominates language choice (~50× from ASM).

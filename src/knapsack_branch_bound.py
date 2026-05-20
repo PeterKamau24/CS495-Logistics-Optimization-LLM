@@ -21,22 +21,37 @@ import time
 
 def read_knapsack_instance(filepath: str) -> Tuple[int, int, List[int], List[int]]:
     """
-    Read a knapsack instance from a text file.
+    Read a knapsack instance from a text file. Accepts either format:
 
-    Expected format:
-        Line 1: n_items capacity
-        Line 2: weight_1 weight_2 ... weight_n
-        Line 3: value_1 value_2 ... value_n
+        3-line:
+            Line 1: n_items capacity
+            Line 2: weight_1 ... weight_n
+            Line 3: value_1 ... value_n
+
+        4-line (canonical, see data/knapsack_input.txt):
+            Line 1: n_items
+            Line 2: weight_1 ... weight_n
+            Line 3: value_1 ... value_n
+            Line 4: capacity
     """
     with open(filepath, 'r') as f:
         lines = [line.strip() for line in f.readlines() if line.strip()]
 
-    first_line = lines[0].split()
-    n_items = int(first_line[0])
-    capacity = int(first_line[1])
-
-    weights = list(map(int, lines[1].split()))
-    values = list(map(int, lines[2].split()))
+    if len(lines) == 4:
+        n_items = int(lines[0])
+        weights = list(map(int, lines[1].split()))
+        values = list(map(int, lines[2].split()))
+        capacity = int(lines[3])
+    elif len(lines) == 3:
+        first = lines[0].split()
+        n_items = int(first[0])
+        capacity = int(first[1])
+        weights = list(map(int, lines[1].split()))
+        values = list(map(int, lines[2].split()))
+    else:
+        raise ValueError(
+            f"Expected 3 or 4 non-empty lines in {filepath}, got {len(lines)}"
+        )
 
     assert len(weights) == n_items, f"Expected {n_items} weights, got {len(weights)}"
     assert len(values) == n_items, f"Expected {n_items} values, got {len(values)}"

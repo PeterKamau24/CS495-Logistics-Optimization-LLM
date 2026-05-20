@@ -1,102 +1,83 @@
-# CS495 - Logistics Optimization with LLM Assistance
+# CS495 — Logistics Optimization with LLM Assistance
 
-## Project Title
-Integer Optimization under LLM Low Language Levels for Logistics Assignment
+A capstone project on integer optimization for logistics assignment, with a companion study of the Branch & Bound algorithm in three languages.
 
-## Overview
-This capstone project studies how integer optimization can be used to solve a logistics assignment problem, specifically assigning drivers to delivery regions under realistic constraints. The project also explores whether large language models (LLMs) can assist in generating parts of the optimization model or implementation.
+## Two Tracks
 
-The main goal is to build a working optimization system that produces valid driver-to-region assignments while comparing hand-built optimization code against LLM-assisted model generation.
+### 1. Production — Driver-to-Region ILP
 
-## Motivation
-Logistics systems often require fast and correct assignment decisions. Poor assignments can lead to uneven workloads, missed coverage, delays, and inefficiency. Because driver-region assignment is naturally constrained, integer optimization is a strong method for solving this type of problem.
+A binary integer linear program in PuLP that assigns drivers to regions subject to eligibility, coverage, and per-driver capacity constraints. Solved via COIN-CBC.
 
-This project is also motivated by interest in understanding whether LLMs can help create structured optimization software in a reliable way, especially for decision problems that depend on correct mathematical constraints.
+- Code: `src/optimization_model.py`, `src/data_preprocessing.py`, `src/evaluation.py`
+- Data: `data/sample_driver_region_data.csv`
+- Run: `python src/main.py driver-region`
 
-## Problem Statement
-Given a set of drivers and delivery regions, assign drivers to regions in a way that:
-- satisfies coverage requirements
-- respects driver availability
-- avoids invalid driver-region assignments
-- balances workload
-- minimizes cost, delay, or assignment imbalance
+### 2. Research — Branch & Bound on 0-1 Knapsack
 
-## Project Goals
-- Build a baseline integer optimization model for driver-to-region assignment
-- Create or simulate a logistics dataset for testing
-- Compare hand-built optimization code with LLM-assisted code generation
-- Evaluate assignment quality and model correctness
-- Document the strengths and weaknesses of LLM support for structured optimization tasks
+The same algorithm implemented in three languages so language overhead and algorithm overhead are separately measurable.
 
-## Example Formulation
-Let:
+- Python: `src/knapsack_branch_bound.py`
+- C++: `src/knapsack_branch_bound.cpp`
+- x86-64 ASM (NASM, Win64): `src/knapsack_branch_bound.asm` + C wrapper
+- Brute-force baselines for comparison: `src/knapsack_brute_force.{py,cpp,asm}`
+- Benchmarks: `notebooks/knapsack_benchmark_3way.ipynb`, `benchmark_results_all_three.json`, `benchmark_results_bb.json`
+- Run: `python src/main.py knapsack-bb --input data/knapsack_input.txt`
 
-- `x(i,j) = 1` if driver `i` is assigned to region `j`
-- `x(i,j) = 0` otherwise
+The two tracks are connected: the CBC solver in track 1 is itself a Branch & Bound implementation. Studying B&B is studying the engine that solves the ILP.
 
-Possible objective:
-- Minimize total assignment cost
-- Minimize workload imbalance
-- Maximize assignment efficiency
+## Headline Results
 
-Possible constraints:
-- Each driver is assigned to at most one region
-- Each region must receive enough driver coverage
-- Invalid driver-region combinations are not allowed
-- Total workload assigned to a driver must stay within limits
+- **Algorithmic effect.** At n = 25, B&B is approximately 1,000,000× faster than brute force, returning the identical optimum (value = 1153).
+- **Language effect (within B&B).** C++ averages ~13× over Python; hand-tuned ASM averages ~52× over Python and ~3× over C++.
+- **Driver-region ILP.** On the 4×3 sample dataset, optimal cost = 13 with full region coverage.
 
-## Dataset
-This project will likely use a synthetic or small simulated dataset with fields such as:
-- driver_id
-- region_id
-- driver_availability
-- region_demand
-- assignment_cost
-- workload_score
-- eligibility_flag
+Full numbers in [`docs/final_report.md`](docs/final_report.md) and [`results/experiment_summary.md`](results/experiment_summary.md).
 
-## Methods
-- Integer Linear Programming (ILP)
-- Branch and Bound through solver libraries
-- LLM-assisted code generation for model drafting or implementation support
+## Setup
 
-## Tools and Technologies
-- Python
-- Pandas
-- NumPy
-- PuLP or OR-Tools
-- Jupyter Notebook / VS Code
-- Matplotlib
-- GitHub
+```bash
+make setup       # poetry install
+make test        # poetry run pytest   (7 tests, all passing)
+make lint        # poetry run ruff check .
+```
 
-## Evaluation
-The project will evaluate:
-- constraint satisfaction
-- total assignment cost
-- region coverage rate
-- workload balance
-- invalid assignment avoidance
-- runtime
-- quality of LLM-assisted implementation compared to manual implementation
+## CLI
 
-## Expected Deliverables
-- source code
-- optimization model
-- dataset
-- experiment results
-- final report
-- presentation slides
+```bash
+python src/main.py --help
+python src/main.py driver-region
+python src/main.py knapsack-pulp
+python src/main.py knapsack-bb --input data/knapsack_input.txt
+```
 
-## Repository Structure
-- `data/` for raw and processed datasets
-- `notebooks/` for experiments and exploration
-- `src/` for reusable code
-- `results/` for outputs and summaries
-- `docs/` for proposal and report materials
-- `slides/` for presentation materials
+## Presentation
 
-## Status
-In progress
+`notebooks/presentation_bb.html` — 14-slide reveal.js deck with speaker notes. Serve locally so the image paths resolve:
+
+```bash
+python -m http.server 8000
+# then open http://localhost:8000/notebooks/presentation_bb.html
+```
+
+## Repository Layout
+
+| Path | Purpose |
+|---|---|
+| `src/` | Solver source — ILP, knapsack PuLP, three-language B&B and brute force |
+| `tests/` | pytest verification of known-answer instances |
+| `data/` | Sample driver-region CSV; canonical knapsack instance |
+| `notebooks/` | Jupyter benchmarking notebooks; reveal.js slide deck; synthetic instances |
+| `docs/` | Proposal, final report, presentation notes |
+| `results/` | Experiment summaries and tabulated benchmarks |
+| `*.json` (root) | Raw benchmark output |
+| `*.png` (root) | Generated benchmark plots and pipeline diagrams |
+
+## Known Limitations
+
+- The LLM-generated-solver comparison (originally proposed Phase 4) is not yet completed; the hand-built B&B suite serves as ground truth for a future iteration.
+- Hexaly is not installed locally; `src/knapsack.hxm` is preserved for reference.
+- The driver-region dataset is a small synthetic instance; production-scale evaluation is future work.
 
 ## Author
-Peter Kamau
+
+Peter Kamau — Bellevue College, CS495
