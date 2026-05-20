@@ -118,17 +118,27 @@ D:  value= 8  weight=4   (ratio 2.00)
             v += values[i]
     if w &lt;= capacity and v &gt; best:
         best = v</code></pre>
-
-  <table>
-    <tr><th>n</th><th>2<sup>n</sup></th><th>Python</th><th>C++</th></tr>
-    <tr><td>20</td><td>~1M</td><td>2.7 s</td><td>0.46 s</td></tr>
-    <tr><td>22</td><td>~4M</td><td>11.8 s</td><td>1.9 s</td></tr>
-    <tr><td>25</td><td>~33M</td><td class="warn">102 s</td><td>15.6 s</td></tr>
-  </table>
   <aside class="notes">
     Exponential. Adding one item DOUBLES the work. Even in C++ at n=25 we're at 15 seconds.
     At n=30 you'd be at 8 minutes. At n=40, you'd be measuring in days. This is the wall
     we have to break.
+  </aside>
+</section>
+
+<!-- ============================== 4b. BRUTE FORCE PLOT ============================== -->
+<section>
+  <h2>Brute Force — Python vs C++ vs Assembly</h2>
+  <img src="../results/figures/benchmark_all_three.png" class="chart" alt="Brute force benchmark across three languages">
+  <p class="tiny" style="margin-top:0.5em;">
+    Exponential growth in all three languages. At n=25:
+    Python <span class="warn">102 s</span>, C++ <span class="warn">15.6 s</span>, ASM <span class="warn">4.9 s</span>.
+    Faster language helps — but you can't out-engineer 2<sup>n</sup>.
+  </p>
+  <aside class="notes">
+    This is the brute-force benchmark on its own. Note the log scale — every step up in n
+    is a noticeable jump. Assembly is the fastest by a constant factor, but the curve still
+    explodes. The takeaway is that no amount of low-level optimization beats the exponential.
+    We need a smarter algorithm.
   </aside>
 </section>
 
@@ -203,23 +213,6 @@ D:  value= 8  weight=4   (ratio 2.00)
   </aside>
 </section>
 
-<!-- ============================== 8. PRUNING EFFECTIVENESS ============================== -->
-<section>
-  <h2>How Much Does Pruning Actually Save?</h2>
-  <img src="../results/figures/pruning_effectiveness.png" class="chart" alt="2^n vs nodes explored">
-  <p class="tiny" style="margin-top:0.5em;">
-    At n=25, the brute force search has <span class="warn">33 million</span> subsets;
-    B&amp;B visits only a few dozen.
-    That's <span class="highlight">less than 0.0001%</span> of the tree.
-  </p>
-  <aside class="notes">
-    This is the punchline of the bound. Left chart: brute force in red versus what B&amp;B
-    actually touches in green, log scale. The gap is enormous and grows with n. Right
-    chart: the same data expressed as a percentage. At n=25 we touch under a thousandth
-    of one percent of the search space. THIS is why B&amp;B works at scale.
-  </aside>
-</section>
-
 <!-- ============================== 9. THREE LANGUAGES ============================== -->
 <section>
   <h2>Same Algorithm, Three Languages</h2>
@@ -245,35 +238,20 @@ D:  value= 8  weight=4   (ratio 2.00)
   </aside>
 </section>
 
-<!-- ============================== 10. ALGORITHMIC WIN ============================== -->
+<!-- ============================== 11. B&B PLOT ============================== -->
 <section>
-  <h2>Algorithmic Win: B&amp;B vs Brute Force</h2>
-  <img src="../results/figures/bb_vs_brute_force_speedup.png" class="chart" alt="B&B speedup over brute force per language">
-  <p class="tiny" style="margin-top:0.5em;">
-    Python at n=25: <span class="warn">102 s</span> → <span class="ok">96 μs</span> —
-    over <span class="highlight">1,000,000× faster</span>.
-    Same answer (1153). Same machine. Just a better algorithm.
-  </p>
-  <aside class="notes">
-    This is the big number. A million times faster, just from a smarter algorithm —
-    no change in hardware, no change in language. The languages all benefit, because the
-    algorithm wins are independent of the language wins. Note the log scale.
-  </aside>
-</section>
-
-<!-- ============================== 11. LANGUAGE WIN ============================== -->
-<section>
-  <h2>3-Way B&amp;B: Python vs C++ vs ASM</h2>
-  <img src="../results/figures/benchmark_bb_comparison.png" class="chart" alt="3-way B&B benchmark comparison">
+  <h2>Branch &amp; Bound — Python vs C++ vs Assembly</h2>
+  <img src="../results/figures/benchmark_bb_comparison.png" class="chart" alt="B&B benchmark across three languages">
   <p class="tiny" style="margin-top:0.3em;">
-    Across n = 3 … 25, C++ averages ~13× faster than Python; hand-tuned x86-64 ASM averages ~52× over Python and ~3× over C++.
+    All three implementations finish in <span class="ok">microseconds</span> across n = 3 … 25.
+    C++ averages ~13× faster than Python; hand-tuned x86-64 ASM averages ~52× over Python and ~3× over C++.
   </p>
   <aside class="notes">
-    Now within B&amp;B, look at language. The relative ranking is consistent: ASM beats
-    C++ beats Python. ASM's edge over C++ is modest — ~3× — and comes from avoiding the
-    function-call overhead and keeping the search state in registers. Whether that's
-    worth maintaining hand-written assembly is a separate question — but it cleanly
-    quantifies the ceiling.
+    This is the Branch &amp; Bound benchmark on its own — same instances, same machine,
+    times now measured in microseconds. The relative ranking across languages is the same
+    as brute force: ASM beats C++ beats Python. The big takeaway is the y-axis units —
+    we've moved from seconds (brute force) to microseconds (B&amp;B), all from a smarter
+    algorithm. Note the log scale.
   </aside>
 </section>
 
