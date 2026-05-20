@@ -339,15 +339,15 @@ def make_pipeline_diagram():
 
 if __name__ == '__main__':
     fig1 = make_pruning_chart()
-    fig1.savefig('pruning_effectiveness.png', dpi=300, bbox_inches='tight')
+    fig1.savefig('results/figures/pruning_effectiveness.png', dpi=300, bbox_inches='tight')
     print('Saved: pruning_effectiveness.png')
 
     fig2 = make_decision_tree()
-    fig2.savefig('bb_decision_tree.png', dpi=300, bbox_inches='tight')
+    fig2.savefig('results/figures/bb_decision_tree.png', dpi=300, bbox_inches='tight')
     print('Saved: bb_decision_tree.png')
 
     fig3 = make_pipeline_diagram()
-    fig3.savefig('project_pipeline.png', dpi=300, bbox_inches='tight')
+    fig3.savefig('results/figures/project_pipeline.png', dpi=300, bbox_inches='tight')
     print('Saved: project_pipeline.png')
 
     plt.show()

@@ -2,7 +2,7 @@
 
 ## Current Deck
 
-Slides live in `notebooks/presentation_bb.html` — a 14-slide reveal.js deck with speaker notes embedded on every slide. Open the file in a browser (use `python -m http.server 8000` from the repo root so the `../*.png` image paths resolve) and press `S` to open speaker view.
+Slides live in `notebooks/presentation_bb.html` — a 14-slide reveal.js deck with speaker notes embedded on every slide. Image paths reference `../results/figures/*.png`, so serve from the repo root (`python -m http.server 8000`) and open `http://localhost:8000/notebooks/presentation_bb.html`. Press `S` to open speaker view.
 
 ## Title
 
@@ -31,11 +31,11 @@ Slides live in `notebooks/presentation_bb.html` — a 14-slide reveal.js deck wi
 
 ## Supporting Visuals (referenced by the deck)
 
-- `bb_decision_tree.png` — annotated B&B tree on the tiny instance, slide 6
-- `pruning_effectiveness.png` — 2^n vs nodes explored, slide 8
-- `bb_vs_brute_force_speedup.png` — language-by-language algorithmic speedup, slide 10
-- `benchmark_bb_comparison.png` — three-way B&B language comparison, slide 11
-- `project_pipeline.png` — capstone pipeline with both tracks, slide 13
+- `results/figures/bb_decision_tree.png` — annotated B&B tree on the tiny instance, slide 6
+- `results/figures/pruning_effectiveness.png` — 2^n vs nodes explored, slide 8
+- `results/figures/bb_vs_brute_force_speedup.png` — language-by-language algorithmic speedup, slide 10
+- `results/figures/benchmark_bb_comparison.png` — three-way B&B language comparison, slide 11
+- `results/figures/project_pipeline.png` — capstone pipeline with both tracks, slide 13
 
 ## Key Messages
 

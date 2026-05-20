@@ -217,11 +217,11 @@ if __name__ == '__main__':
         'benchmark_results_all_three.json') else None
 
     fig1 = create_bb_plots(bb, bf)
-    fig1.savefig('benchmark_bb_comparison.png', dpi=300, bbox_inches='tight')
+    fig1.savefig('results/figures/benchmark_bb_comparison.png', dpi=300, bbox_inches='tight')
     print('Saved: benchmark_bb_comparison.png')
 
     fig2 = create_speedup_focus(bb, bf)
-    fig2.savefig('bb_vs_brute_force_speedup.png', dpi=300, bbox_inches='tight')
+    fig2.savefig('results/figures/bb_vs_brute_force_speedup.png', dpi=300, bbox_inches='tight')
     print('Saved: bb_vs_brute_force_speedup.png')
 
     plt.show()

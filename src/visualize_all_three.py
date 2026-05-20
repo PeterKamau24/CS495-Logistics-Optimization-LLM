@@ -303,12 +303,12 @@ if __name__ == "__main__":
 
     # Create main benchmark plots
     fig1 = create_comprehensive_plots(results)
-    fig1.savefig('benchmark_all_three.png', dpi=300, bbox_inches='tight')
+    fig1.savefig('results/figures/benchmark_all_three.png', dpi=300, bbox_inches='tight')
     print("Saved: benchmark_all_three.png")
 
     # Create scaling analysis
     fig2 = create_scaling_comparison(results)
-    fig2.savefig('scaling_all_three.png', dpi=300, bbox_inches='tight')
+    fig2.savefig('results/figures/scaling_all_three.png', dpi=300, bbox_inches='tight')
     print("Saved: scaling_all_three.png")
 
     print("\nVisualization complete!")

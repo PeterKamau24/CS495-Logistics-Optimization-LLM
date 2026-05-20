@@ -159,7 +159,7 @@ D:  value= 8  weight=4   (ratio 2.00)
 <!-- ============================== 6. DECISION TREE PICTURE ============================== -->
 <section>
   <h2>B&amp;B Decision Tree — On Our Tiny Instance</h2>
-  <img src="../bb_decision_tree.png" class="chart" alt="Annotated B&B decision tree">
+  <img src="../results/figures/bb_decision_tree.png" class="chart" alt="Annotated B&B decision tree">
   <p class="tiny" style="margin-top:0.5em;">
     Out of <span class="warn">16</span> possible subsets, B&amp;B visits
     <span class="ok">9 nodes</span> — 3 pruned by bound, 2 by infeasibility.
@@ -206,7 +206,7 @@ D:  value= 8  weight=4   (ratio 2.00)
 <!-- ============================== 8. PRUNING EFFECTIVENESS ============================== -->
 <section>
   <h2>How Much Does Pruning Actually Save?</h2>
-  <img src="../pruning_effectiveness.png" class="chart" alt="2^n vs nodes explored">
+  <img src="../results/figures/pruning_effectiveness.png" class="chart" alt="2^n vs nodes explored">
   <p class="tiny" style="margin-top:0.5em;">
     At n=25, the brute force search has <span class="warn">33 million</span> subsets;
     B&amp;B visits only a few dozen.
@@ -248,7 +248,7 @@ D:  value= 8  weight=4   (ratio 2.00)
 <!-- ============================== 10. ALGORITHMIC WIN ============================== -->
 <section>
   <h2>Algorithmic Win: B&amp;B vs Brute Force</h2>
-  <img src="../bb_vs_brute_force_speedup.png" class="chart" alt="B&B speedup over brute force per language">
+  <img src="../results/figures/bb_vs_brute_force_speedup.png" class="chart" alt="B&B speedup over brute force per language">
   <p class="tiny" style="margin-top:0.5em;">
     Python at n=25: <span class="warn">102 s</span> → <span class="ok">96 μs</span> —
     over <span class="highlight">1,000,000× faster</span>.
@@ -264,7 +264,7 @@ D:  value= 8  weight=4   (ratio 2.00)
 <!-- ============================== 11. LANGUAGE WIN ============================== -->
 <section>
   <h2>3-Way B&amp;B: Python vs C++ vs ASM</h2>
-  <img src="../benchmark_bb_comparison.png" class="chart" alt="3-way B&B benchmark comparison">
+  <img src="../results/figures/benchmark_bb_comparison.png" class="chart" alt="3-way B&B benchmark comparison">
   <p class="tiny" style="margin-top:0.3em;">
     Across n = 3 … 25, C++ averages ~13× faster than Python; hand-tuned x86-64 ASM averages ~52× over Python and ~3× over C++.
   </p>
@@ -317,7 +317,7 @@ D:  value= 8  weight=4   (ratio 2.00)
 <!-- ============================== 13. CAPSTONE PIPELINE ============================== -->
 <section>
   <h2>Where B&amp;B Fits in the Capstone</h2>
-  <img src="../project_pipeline.png" class="chart" alt="Capstone pipeline showing B&B inside CBC">
+  <img src="../results/figures/project_pipeline.png" class="chart" alt="Capstone pipeline showing B&B inside CBC">
   <p class="tiny" style="margin-top:0.3em;">
     Production track and research track both pass through the same algorithm family.
   </p>

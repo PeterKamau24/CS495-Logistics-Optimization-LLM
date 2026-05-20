@@ -6,7 +6,6 @@ venv/
 .venv/
 .DS_Store
 Thumbs.db
-results/figures/*.png
 results/tables/*.csv
 
 # Build artifacts

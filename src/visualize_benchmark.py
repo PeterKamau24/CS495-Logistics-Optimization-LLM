@@ -209,12 +209,12 @@ if __name__ == "__main__":
 
     # Create main benchmark plots
     fig1 = create_benchmark_plots(results)
-    fig1.savefig('benchmark_comparison.png', dpi=300, bbox_inches='tight')
+    fig1.savefig('results/figures/benchmark_comparison.png', dpi=300, bbox_inches='tight')
     print("Saved: benchmark_comparison.png")
 
     # Create scaling analysis
     fig2 = create_scaling_analysis(results)
-    fig2.savefig('scaling_analysis.png', dpi=300, bbox_inches='tight')
+    fig2.savefig('results/figures/scaling_analysis.png', dpi=300, bbox_inches='tight')
     print("Saved: scaling_analysis.png")
 
     plt.show()
