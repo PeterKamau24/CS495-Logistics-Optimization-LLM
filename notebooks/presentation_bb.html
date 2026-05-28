@@ -143,6 +143,26 @@ D:  value= 8  weight=4   (ratio 2.00)
   </aside>
 </section>
 
+<!-- ============================== 4c. SCALING ANALYSIS ============================== -->
+<section>
+  <h2>Exponential Scaling — Quantified</h2>
+  <img src="../results/figures/scaling_all_three.png" class="chart" alt="Exponential scaling: curve fits, growth rate, performance gap evolution">
+  <p class="tiny" style="margin-top:0.3em;">
+    <strong>Left:</strong> log-linear fits confirm <span class="warn">T ∝ 2<sup>n</sup></span> in all three languages.
+    <strong>Middle:</strong> empirical growth factor T(n+1)/T(n) hugs the theoretical 2× line.
+    <strong>Right:</strong> the language gap (Python/C++, Python/ASM) <em>widens</em> with n — constant factors compound on exponential work.
+  </p>
+  <aside class="notes">
+    This slide is the rigor check on the brute-force claim. Left panel: I fit T = a · 2^n to
+    each language's data — the fits are nearly perfect, which confirms the asymptotic.
+    Middle panel: between consecutive instance sizes, the runtime ratio sits right on the
+    theoretical doubling line. Right panel: the speedup gap between Python and the compiled
+    languages isn't constant — it grows, because a constant-factor advantage applied to
+    exponential work shows up more dramatically as n increases. This is the empirical
+    case for "you can't out-engineer 2^n."
+  </aside>
+</section>
+
 <!-- ============================== 5. B&B IDEA ============================== -->
 <section>
   <h2>Branch &amp; Bound — The Idea</h2>
@@ -306,6 +326,26 @@ D:  value= 8  weight=4   (ratio 2.00)
     baseline, B&amp;B implementation, verified speedup. The orange box in the middle
     — same algorithm family. The reason this work isn't a side quest is that I'm
     studying the engine I'm depending on.
+  </aside>
+</section>
+
+<!-- ============================== 13b. ALGORITHM BEATS HARDWARE ============================== -->
+<section>
+  <h2>Algorithm Beats Hardware</h2>
+  <img src="../results/figures/benchmark_presentation.png" class="chart" alt="Algorithm beats hardware: B&B vs brute force across languages">
+  <p class="tiny" style="margin-top:0.3em;">
+    Three implementations, same problem. At n=25, <span class="ok">PuLP/CBC (B&amp;B) is ~129× faster</span>
+    than C++ brute force and ~580× faster than x86-64 ASM brute force.
+    <span class="highlight">A smarter algorithm in a slower language beats brute force in the fastest one.</span>
+  </p>
+  <aside class="notes">
+    This is the headline chart. Three lines climbing the exponential — C++ brute force,
+    x86-64 ASM brute force — and one flat line near the bottom: PuLP/CBC, which uses
+    Branch &amp; Bound. The crossover annotation marks where brute force becomes slower
+    than the smart algorithm. At n=25 the gap is two orders of magnitude. The punchline:
+    PuLP is written in Python and calls a C solver, so it's not even the fastest stack —
+    but the algorithm choice dominates the language choice. This is the visual proof of
+    the takeaway I'll land on next.
   </aside>
 </section>
 
