@@ -349,6 +349,32 @@ D:  value= 8  weight=4   (ratio 2.00)
   </aside>
 </section>
 
+<!-- ============================== 13c. VERIFICATION ============================== -->
+<section>
+  <h2>Are the Solvers Actually Correct?</h2>
+  <div class="small" style="text-align:left;">
+    <p>Benchmark numbers only mean something if the answer is right. The test suite cross-checks four independent implementations against each other:</p>
+    <ul style="line-height:1.55;">
+      <li><span class="accent">Known-answer tests</span> — PuLP &amp; B&amp;B both return <span class="ok">value=11</span> (PLAN-v1) and <span class="ok">value=598</span> (disaster relief).</li>
+      <li><span class="accent">Cross-solver agreement</span> — PuLP, B&amp;B, and brute force all agree on the canonical instance, and each reported solution is independently re-checked for feasibility.</li>
+      <li><span class="accent">Random-instance fuzzing</span> — 50 random instances (n=1..12, seeded). B&amp;B must match brute force on every one. Brute force is the <em>oracle</em>: correct by exhaustive enumeration.</li>
+      <li><span class="accent">Solution invariants</span> — for every returned solution: indices distinct, weight ≤ capacity, reported value = Σ values of selected items.</li>
+    </ul>
+  </div>
+  <pre class="tiny" style="margin-top:0.8em;"><code data-trim>tests/test_knapsack.py ................................... 9 passed in 0.23s
+  test_all_solvers_agree_on_canonical_instance        PASSED
+  test_bb_matches_brute_force_on_random_instances     PASSED  (50 random instances)</code></pre>
+  <aside class="notes">
+    A benchmark is only meaningful if the solver is correct. Four solvers, four angles of
+    verification. Brute force is the oracle because it tries every subset — it cannot be
+    wrong on small n. So if B&amp;B agrees with brute force on 50 random seeded instances,
+    plus the canonical instance, plus the disaster-relief instance, that's strong evidence
+    the pruning logic is sound. The invariant check also catches the subtler bug class
+    where the value is right but the reported item list is wrong. Nine tests pass in under
+    a second — full suite runs on every change.
+  </aside>
+</section>
+
 <!-- ============================== 14. TAKEAWAYS ============================== -->
 <section>
   <h2>Takeaways</h2>
@@ -357,6 +383,7 @@ D:  value= 8  weight=4   (ratio 2.00)
     <li><span class="ok">B&amp;B</span> uses an LP-relaxation bound to prune the search tree: correct, optimal, dramatically faster.</li>
     <li><span class="ok">Same algorithm in 3 languages</span> isolates language overhead from algorithm overhead — the speedups multiply independently.</li>
     <li><span class="ok">Connection:</span> the ILP solvers I use for logistics assignment are B&amp;B under the hood. Understanding B&amp;B = understanding the tools.</li>
+    <li><span class="ok">Verified:</span> 9-test pytest suite — known answers, cross-solver agreement, 50 random instances against the brute-force oracle, plus per-solution feasibility checks.</li>
   </ul>
   <p style="margin-top:2em;" class="accent">Questions?</p>
   <div class="footer-note">github.com/PeterKamau24/CS495-Logistics-Optimization-LLM</div>

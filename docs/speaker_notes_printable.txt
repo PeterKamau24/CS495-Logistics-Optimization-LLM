@@ -1,0 +1,181 @@
+================================================================================
+BRANCH & BOUND FOR THE 0-1 KNAPSACK PROBLEM
+Python | C++ | x86-64 Assembly
+
+Peter Kamau  |  Instructor: Prof. Dr. Pedro Albuquerque
+CS495 Capstone -- Logistics Optimization & LLM  |  May 2026
+
+Speaker notes -- 15 slides, target 7 minutes (flag at 6).
+================================================================================
+
+
+--------------------------------------------------------------------------------
+SLIDE 1 -- TITLE
+--------------------------------------------------------------------------------
+Hi everyone. Today I want to show you how a textbook problem -- 0-1 knapsack --
+and a classical algorithm -- Branch & Bound -- explain what's actually happening
+inside the optimization solvers I'm using for my logistics capstone. I
+implemented the same algorithm in three languages so we can isolate algorithm
+wins from language wins. Aim for 7 minutes -- flag me at 6.
+
+
+--------------------------------------------------------------------------------
+SLIDE 2 -- THE 0-1 KNAPSACK PROBLEM
+--------------------------------------------------------------------------------
+Quick problem framing. Every x_i is a binary in-or-out choice. The constraint
+is capacity. The objective is total value. NP-hard means no known polynomial
+algorithm that's always exact. Connect it to logistics: items become shipments
+and capacity becomes the truck. The driver-to-region assignment in my project
+is the same family -- binary decisions with linear constraints.
+
+
+--------------------------------------------------------------------------------
+SLIDE 3 -- A CONCRETE TINY INSTANCE
+--------------------------------------------------------------------------------
+Anchor instance. The ratio column is the LP "bang for your buck" -- high ratio
+items are the greedy first choices. Optimal here is B+C = value 22 with
+weight 8. Hold that answer for the tree slide.
+
+
+--------------------------------------------------------------------------------
+SLIDE 4 -- BASELINE: BRUTE FORCE
+--------------------------------------------------------------------------------
+Exponential. Adding one item DOUBLES the work. Even in C++ at n=25 we're at 15
+seconds. At n=30 you'd be at 8 minutes. At n=40, you'd be measuring in days.
+This is the wall we have to break.
+
+
+--------------------------------------------------------------------------------
+SLIDE 5 -- BRUTE FORCE: PYTHON vs C++ vs ASSEMBLY
+--------------------------------------------------------------------------------
+This is the brute-force benchmark on its own. Note the log scale -- every step
+up in n is a noticeable jump. Assembly is the fastest by a constant factor,
+but the curve still explodes. The takeaway is that no amount of low-level
+optimization beats the exponential. We need a smarter algorithm.
+
+
+--------------------------------------------------------------------------------
+SLIDE 6 -- EXPONENTIAL SCALING, QUANTIFIED
+--------------------------------------------------------------------------------
+This slide is the rigor check on the brute-force claim. Left panel: I fit
+T = a * 2^n to each language's data -- the fits are nearly perfect, which
+confirms the asymptotic. Middle panel: between consecutive instance sizes, the
+runtime ratio sits right on the theoretical doubling line. Right panel: the
+speedup gap between Python and the compiled languages isn't constant -- it
+grows, because a constant-factor advantage applied to exponential work shows
+up more dramatically as n increases. This is the empirical case for "you can't
+out-engineer 2^n."
+
+
+--------------------------------------------------------------------------------
+SLIDE 7 -- BRANCH & BOUND, THE IDEA
+--------------------------------------------------------------------------------
+The whole idea is: never expand a subtree we can prove won't beat what we
+already have. Three parts. Branch = the decision tree. Bound = an optimistic
+estimate of what's possible from here. Prune = cut whole subtrees. The sorting
+is the trick -- it makes the greedy choice the first thing we try, so we have
+a strong incumbent quickly, which makes the bound condition fire more often.
+
+
+--------------------------------------------------------------------------------
+SLIDE 8 -- B&B DECISION TREE, ON OUR TINY INSTANCE
+--------------------------------------------------------------------------------
+Walk left to right. We try include-A first (greedy), then include-B, hit a
+value of 20 quickly. Then under A=0, B=1, C=1 we find value 22 -- that's our
+incumbent. Now look at the red nodes: they're not explored because their
+LP-relaxation upper bound is already <= 22, so there's no way they can beat
+it. The orange nodes are infeasible -- over capacity. We've reduced 16 subsets
+to 9 explored nodes. At n=25 the reduction is closer to a million-to-one.
+Next slide.
+
+
+--------------------------------------------------------------------------------
+SLIDE 9 -- THE BOUND: LP RELAXATION
+--------------------------------------------------------------------------------
+Why this bound? Because it's tight AND fast. Tight: the LP relaxation is the
+tightest polynomial bound we know. Fast: with sorted items, it's a single O(n)
+sweep. The integer-floor trick is what lets the ASM version stay in integer
+registers -- no floating point at all.
+
+
+--------------------------------------------------------------------------------
+SLIDE 10 -- SAME ALGORITHM, THREE LANGUAGES
+--------------------------------------------------------------------------------
+Same algorithm, same shape in all three languages. That's deliberate -- it
+lets us isolate the language overhead from the algorithm overhead. The ASM
+version was the most fun: I used callee-saved registers as "globals" for the
+search state, and recursed using the real call stack. The bound computation
+is all integer division.
+
+
+--------------------------------------------------------------------------------
+SLIDE 11 -- BRANCH & BOUND: PYTHON vs C++ vs ASSEMBLY
+--------------------------------------------------------------------------------
+This is the Branch & Bound benchmark on its own -- same instances, same
+machine, times now measured in microseconds. The relative ranking across
+languages is the same as brute force: ASM beats C++ beats Python. The big
+takeaway is the y-axis units -- we've moved from seconds (brute force) to
+microseconds (B&B), all from a smarter algorithm. Note the log scale.
+
+
+--------------------------------------------------------------------------------
+SLIDE 12 -- CONNECTION TO MY CAPSTONE
+--------------------------------------------------------------------------------
+Here's the bridge to the capstone. The driver-to-region problem is an integer
+linear program -- binary x[d,r], cost-minimizing objective, eligibility and
+coverage constraints. When I write prob.solve() in PuLP, it hands the problem
+to CBC. CBC IS Branch and Bound -- with cuts and heuristics on top, but the
+spine is B&B. On the LLM track, knapsack is the right testbed because it's
+small, well-defined, and we have ground truth from this work. If I ask an LLM
+to write a knapsack solver, I can measure whether it found B&B or just brute
+force.
+
+
+--------------------------------------------------------------------------------
+SLIDE 13 -- WHERE B&B FITS IN THE CAPSTONE
+--------------------------------------------------------------------------------
+Top row is production: CSV in, PuLP model, CBC solver, assignments out. Bottom
+row is the research track I've been building this term: knapsack instances,
+brute force baseline, B&B implementation, verified speedup. The orange box in
+the middle -- same algorithm family. The reason this work isn't a side quest
+is that I'm studying the engine I'm depending on.
+
+
+--------------------------------------------------------------------------------
+SLIDE 14 -- ALGORITHM BEATS HARDWARE
+--------------------------------------------------------------------------------
+This is the headline chart. Three lines climbing the exponential -- C++ brute
+force, x86-64 ASM brute force -- and one flat line near the bottom: PuLP/CBC,
+which uses Branch & Bound. The crossover annotation marks where brute force
+becomes slower than the smart algorithm. At n=25 the gap is two orders of
+magnitude. The punchline: PuLP is written in Python and calls a C solver, so
+it's not even the fastest stack -- but the algorithm choice dominates the
+language choice. This is the visual proof of the takeaway I'll land on next.
+
+
+--------------------------------------------------------------------------------
+SLIDE 15 -- TAKEAWAYS
+--------------------------------------------------------------------------------
+Close with the three takeaways. Brute force is the baseline that makes the win
+measurable. B&B uses a clever bound to prune. Same algorithm in three
+languages cleanly separates the two dimensions. And the connection -- this is
+the engine of CBC, which is the engine of my capstone. Open the floor.
+
+Likely questions:
+
+  Q: "Why not dynamic programming?"
+  A: DP is pseudo-polynomial in capacity, great when capacity is small, but
+     for the LP-ILP connection B&B is the right thing to study.
+
+  Q: "Does the LLM track use this?"
+  A: Yes, for evaluation: same instances, compare LLM-generated solvers
+     against this baseline.
+
+  Q: "Why ASM?"
+  A: Partly to quantify the ceiling, partly because the capstone has a
+     language-comparison angle.
+
+
+================================================================================
+END OF SPEAKER NOTES
+================================================================================
