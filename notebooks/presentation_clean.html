@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Branch &amp; Bound for 0-1 Knapsack &mdash; CS495</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/dist/reset.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/dist/reveal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/dist/theme/white.css" id="theme">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/plugin/highlight/github.css">
+
+  <style>
+    :root {
+      --accent:   #1565c0;
+      --accent-2: #0277bd;
+      --highlight:#ef6c00;
+      --warn:     #c62828;
+      --ok:       #2e7d32;
+      --muted:    #546e7a;
+      --paper:    #fafafa;
+    }
+    .reveal { font-family: "Inter", "Segoe UI", system-ui, sans-serif; color: #1a1a1a; }
+    .reveal h1 { font-size: 1.9em; color: #0d47a1; letter-spacing: -0.01em; }
+    .reveal h2 { font-size: 1.45em; color: var(--accent); margin-bottom: 0.4em; }
+    .reveal h3 { font-size: 1.1em; color: var(--accent-2); }
+    .reveal p, .reveal li { line-height: 1.45; }
+    .reveal .small { font-size: 0.72em; }
+    .reveal .tiny  { font-size: 0.58em; color: var(--muted); }
+    .reveal pre { box-shadow: none; width: 100%; border-radius: 6px; }
+    .reveal pre code {
+      max-height: 480px; font-size: 0.7em; line-height: 1.35;
+      padding: 1em 1.2em; background: var(--paper); border: 1px solid #e0e0e0;
+    }
+    .reveal table { font-size: 0.7em; margin: 0.6em auto; border-collapse: collapse; }
+    .reveal table th { color: var(--accent); border-bottom: 2px solid var(--accent); }
+    .reveal table td, .reveal table th { padding: 0.3em 0.85em; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.8em; align-items: center; }
+    .highlight { color: var(--highlight); font-weight: 600; }
+    .accent    { color: var(--accent); font-weight: 600; }
+    .warn      { color: var(--warn);   font-weight: 600; }
+    .ok        { color: var(--ok);     font-weight: 600; }
+    .footer-note {
+      position: absolute; bottom: 0.6em; right: 1em;
+      font-size: 0.42em; color: var(--muted); opacity: 0.7;
+    }
+    img.chart {
+      max-height: 60vh; border-radius: 6px; background: white;
+      padding: 4px; border: 1px solid #e0e0e0;
+    }
+    .items-box {
+      display: inline-block; background: var(--paper); border: 1px solid #cfd8dc;
+      border-radius: 6px; padding: 0.7em 1.2em;
+      font-family: "JetBrains Mono", Consolas, monospace; font-size: 0.78em;
+      text-align: left;
+    }
+    .callout {
+      background: #e3f2fd; border-left: 4px solid var(--accent);
+      padding: 0.7em 1em; border-radius: 4px; margin: 0.6em auto;
+      max-width: 80%; font-size: 0.72em;
+    }
+    .reveal section { text-align: left; }
+    .reveal section.title-slide { text-align: center; }
+  </style>
+</head>
+<body>
+
+<div class="reveal">
+<div class="slides">
+
+<!-- 1. TITLE -->
+<section class="title-slide">
+  <h1>Branch &amp; Bound for the 0-1 Knapsack Problem</h1>
+  <h3 style="color: var(--muted);">Python &middot; C++ &middot; x86-64 Assembly</h3>
+  <p class="small" style="margin-top: 2em;">
+    <strong>Peter Kamau</strong><br>
+    Instructor: Prof. Dr. Pedro Albuquerque<br>
+    CS495 Capstone &mdash; Logistics Optimization &amp; LLM<br>
+    <span style="color: var(--muted);">May 2026</span>
+  </p>
+</section>
+
+<!-- 2. THE PROBLEM -->
+<section>
+  <h2>The 0-1 Knapsack Problem</h2>
+  <div class="two-col">
+    <div>
+      <p class="small">Given <span class="accent">n</span> items with weights <em>w<sub>i</sub></em> and values <em>v<sub>i</sub></em>, and a knapsack of capacity <span class="accent">C</span> &mdash; pick a subset that <span class="highlight">maximizes total value</span> without exceeding capacity.</p>
+      <pre class="small"><code class="language-text">maximize   &Sigma; v&#7522; &middot; x&#7522;
+subject to &Sigma; w&#7522; &middot; x&#7522; &le; C
+           x&#7522; &isin; {0, 1}</code></pre>
+    </div>
+    <div class="small">
+      <h3>Why it matters</h3>
+      <ul>
+        <li><span class="ok">Canonical</span> NP-hard problem</li>
+        <li>Same family as <em>driver-to-region</em>, truck loading, budget allocation</li>
+        <li>Solvers like <strong>PuLP/CBC</strong> use B&amp;B under the hood</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 3. CONCRETE EXAMPLE -->
+<section>
+  <h2>A Concrete Tiny Instance</h2>
+  <p class="small">4 items, capacity 8. Which subset wins?</p>
+  <div style="text-align: center;">
+    <div class="items-box">
+A:  value=10  weight=2   (ratio 5.00)
+B:  value=10  weight=3   (ratio 3.33)
+C:  value=12  weight=5   (ratio 2.40)
+D:  value= 8  weight=4   (ratio 2.00)
+    </div>
+  </div>
+  <p class="small" style="margin-top: 1.2em;">
+    Sorted by value/weight ratio. <span class="accent">16 subsets</span> total at n=4.
+    Manageable by hand &mdash; but at n=25, that's <span class="warn">33 million</span> subsets.
+  </p>
+  <p class="tiny">Hold this in your head &mdash; we'll trace the B&amp;B tree on this exact instance shortly.</p>
+</section>
+
+<!-- 4. BRUTE FORCE -->
+<section>
+  <h2>Baseline: Brute Force</h2>
+  <p class="small">Enumerate every subset &mdash; <span class="warn">2<sup>n</sup></span> of them.</p>
+  <pre><code class="language-python" data-trim>for mask in range(1 &lt;&lt; n):           # 2^n iterations
+    w, v = 0, 0
+    for i in range(n):
+        if mask &amp; (1 &lt;&lt; i):
+            w += weights[i]
+            v += values[i]
+    if w &lt;= capacity and v &gt; best:
+        best = v</code></pre>
+  <p class="tiny" style="margin-top: 0.6em;">
+    Correct by construction &mdash; but doubles in cost every time you add one item.
+  </p>
+</section>
+
+<!-- 4b. BRUTE FORCE PLOT -->
+<section style="text-align: center;">
+  <h2>Brute Force &mdash; Python vs C++ vs Assembly</h2>
+  <img src="../results/figures/benchmark_all_three.png" class="chart" alt="Brute force benchmark across three languages">
+  <p class="tiny" style="margin-top: 0.6em;">
+    Exponential growth in all three languages. At n=25:
+    Python <span class="warn">102 s</span>, C++ <span class="warn">15.6 s</span>, ASM <span class="warn">4.9 s</span>.
+    Faster language helps &mdash; but you can't out-engineer 2<sup>n</sup>.
+  </p>
+</section>
+
+<!-- 4c. SCALING ANALYSIS -->
+<section style="text-align: center;">
+  <h2>Exponential Scaling &mdash; Quantified</h2>
+  <img src="../results/figures/scaling_all_three.png" class="chart" alt="Exponential scaling: curve fits, growth rate, performance gap evolution">
+  <p class="tiny" style="margin-top: 0.4em;">
+    <strong>Left:</strong> log-linear fits confirm <span class="warn">T &prop; 2<sup>n</sup></span> in all three languages.
+    <strong>Middle:</strong> empirical growth factor T(n+1)/T(n) hugs the theoretical 2&times; line.
+    <strong>Right:</strong> the language gap (Python/C++, Python/ASM) <em>widens</em> with n &mdash; constant factors compound on exponential work.
+  </p>
+</section>
+
+<!-- 5. B&B IDEA -->
+<section>
+  <h2>Branch &amp; Bound &mdash; The Idea</h2>
+  <div class="small">
+    <ol style="line-height: 1.8;">
+      <li><span class="accent">Branch.</span> At each item, recurse on <em>include</em> vs <em>exclude</em>.</li>
+      <li><span class="accent">Bound.</span> Compute an upper bound on the best the subtree could produce.</li>
+      <li><span class="accent">Prune.</span> If bound &le; current best, skip the whole subtree.</li>
+    </ol>
+  </div>
+  <div class="callout">
+    Items are pre-sorted by <span class="highlight">value / weight</span> descending,
+    so the <em>include</em> branch is always the greedy guess &mdash;
+    it finds a strong incumbent fast, which makes the bound tighter and prunes harder.
+  </div>
+</section>
+
+<!-- 6. DECISION TREE PICTURE -->
+<section style="text-align: center;">
+  <h2>B&amp;B Decision Tree &mdash; On Our Tiny Instance</h2>
+  <img src="../results/figures/bb_decision_tree.png" class="chart" alt="Annotated B&B decision tree">
+  <p class="tiny" style="margin-top: 0.6em;">
+    Out of <span class="warn">16</span> possible subsets, B&amp;B visits
+    <span class="ok">9 nodes</span> &mdash; 3 pruned by bound, 2 by infeasibility.
+    The best feasible solution <span class="ok">B+C = 22</span> is found early
+    and powers the rest of the pruning.
+  </p>
+</section>
+
+<!-- 7. THE BOUND -->
+<section>
+  <h2>The Bound: LP Relaxation</h2>
+  <p class="small">Relax <em>x<sub>i</sub></em> &isin; {0,1} &rarr; <em>x<sub>i</sub></em> &isin; [0,1]. The fractional knapsack has a closed-form greedy answer.</p>
+  <pre><code class="language-python" data-trim>def upper_bound(level, cur_weight, cur_value):
+    bound = cur_value
+    rem = capacity - cur_weight
+    for i in range(level, n):
+        if w[i] &lt;= rem:           # take the whole item
+            bound += v[i]
+            rem -= w[i]
+        else:                      # take a fraction of the next item
+            bound += v[i] * rem / w[i]
+            break
+    return bound</code></pre>
+  <p class="tiny">Items already sorted by value/weight, so this greedy fill <em>is</em> the LP optimum.
+  Floor of the bound stays valid for integers &mdash; that's why ASM stays in pure integer math, no FPU.</p>
+</section>
+
+<!-- 9. THREE LANGUAGES -->
+<section>
+  <h2>Same Algorithm, Three Languages</h2>
+  <pre><code class="language-cpp" data-trim data-line-numbers>void branch(int level, int cw, int cv) {
+    if (cv &gt; best) { best = cv; ... }
+    if (level == N) return;
+    if (upper_bound(level, cw, cv) &lt;= best) return;   // PRUNE
+
+    if (cw + W[level] &lt;= CAP)                          // INCLUDE
+        branch(level+1, cw + W[level], cv + V[level]);
+    branch(level+1, cw, cv);                            // EXCLUDE
+}</code></pre>
+  <p class="tiny">Python and C++ are line-for-line equivalent.
+  The x86-64 ASM uses the Win64 ABI and recurses via <code>call</code>/<code>ret</code> &mdash;
+  r12/r13 hold the sorted arrays, ebx holds the running incumbent, the bound is computed inline in pure integer math.</p>
+</section>
+
+<!-- 11. B&B PLOT -->
+<section style="text-align: center;">
+  <h2>Branch &amp; Bound &mdash; Python vs C++ vs Assembly</h2>
+  <img src="../results/figures/benchmark_bb_comparison.png" class="chart" alt="B&B benchmark across three languages">
+  <p class="tiny" style="margin-top: 0.5em;">
+    All three implementations finish in <span class="ok">microseconds</span> across n = 3 &hellip; 25.
+    C++ averages ~13&times; faster than Python; hand-tuned x86-64 ASM averages ~52&times; over Python and ~3&times; over C++.
+  </p>
+</section>
+
+<!-- 12. CONNECTION TO PROJECT -->
+<section>
+  <h2>Connection to My Capstone</h2>
+  <div class="two-col">
+    <div class="small">
+      <h3>Logistics ILP</h3>
+      <ul>
+        <li>Driver-to-region binary ILP</li>
+        <li>Modeled in PuLP, solved with CBC</li>
+        <li class="highlight">CBC <em>is</em> a Branch &amp; Bound solver</li>
+        <li>Knapsack is its <em>didactic sibling</em></li>
+      </ul>
+    </div>
+    <div class="small">
+      <h3>LLM Track</h3>
+      <ul>
+        <li>Hand-built solvers (this work) vs LLM-generated code</li>
+        <li>Knapsack is the right testbed: small, well-defined, <em>has ground truth</em></li>
+        <li>Brute-force &harr; B&amp;B comparison shows the algorithmic gap an LLM must learn to close</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout">
+    The lesson: <span class="highlight">algorithmic choice dominates language choice</span>.
+    A million&times; win from B&amp;B; a 50&times; win from ASM. Both matter &mdash; but you can't out-engineer an exponential.
+  </div>
+</section>
+
+<!-- 13. CAPSTONE PIPELINE -->
+<section style="text-align: center;">
+  <h2>Where B&amp;B Fits in the Capstone</h2>
+  <img src="../results/figures/project_pipeline.png" class="chart" alt="Capstone pipeline showing B&B inside CBC">
+  <p class="tiny" style="margin-top: 0.5em;">
+    Production track and research track both pass through the same algorithm family.
+  </p>
+</section>
+
+<!-- 13b. ALGORITHM BEATS HARDWARE -->
+<section style="text-align: center;">
+  <h2>Algorithm Beats Hardware</h2>
+  <img src="../results/figures/benchmark_presentation.png" class="chart" alt="Algorithm beats hardware: B&B vs brute force across languages">
+  <p class="tiny" style="margin-top: 0.5em;">
+    Three implementations, same problem. At n=25, <span class="ok">PuLP/CBC (B&amp;B) is ~129&times; faster</span>
+    than C++ brute force and ~580&times; faster than x86-64 ASM brute force.
+    <span class="highlight">A smarter algorithm in a slower language beats brute force in the fastest one.</span>
+  </p>
+</section>
+
+<!-- 13c. VERIFICATION -->
+<section>
+  <h2>Are the Solvers Actually Correct?</h2>
+  <div class="small">
+    <p>Benchmark numbers only mean something if the answer is right. The test suite cross-checks four independent implementations against each other:</p>
+    <ul style="line-height: 1.55;">
+      <li><span class="accent">Known-answer tests</span> &mdash; PuLP &amp; B&amp;B both return <span class="ok">value=11</span> (PLAN-v1) and <span class="ok">value=598</span> (disaster relief).</li>
+      <li><span class="accent">Cross-solver agreement</span> &mdash; PuLP, B&amp;B, and brute force all agree on the canonical instance, with each solution re-checked for feasibility.</li>
+      <li><span class="accent">Random-instance fuzzing</span> &mdash; 50 random instances (n=1..12, seeded). B&amp;B must match brute force on every one. Brute force is the <em>oracle</em>: correct by exhaustive enumeration.</li>
+      <li><span class="accent">Solution invariants</span> &mdash; for every returned solution: indices distinct, weight &le; capacity, reported value = &Sigma; values of selected items.</li>
+    </ul>
+  </div>
+  <pre class="tiny" style="margin-top: 0.7em;"><code data-trim>tests/test_knapsack.py ............................. 9 passed in 0.23s
+  test_all_solvers_agree_on_canonical_instance        PASSED
+  test_bb_matches_brute_force_on_random_instances     PASSED  (50 random instances)</code></pre>
+</section>
+
+<!-- 14. TAKEAWAYS -->
+<section>
+  <h2>Takeaways</h2>
+  <ul class="small" style="line-height: 1.75;">
+    <li><span class="ok">Brute force</span> is a useful baseline &mdash; and a clear demonstration of why we need smarter algorithms.</li>
+    <li><span class="ok">B&amp;B</span> uses an LP-relaxation bound to prune the search tree: correct, optimal, dramatically faster.</li>
+    <li><span class="ok">Same algorithm in 3 languages</span> isolates language overhead from algorithm overhead &mdash; the speedups multiply independently.</li>
+    <li><span class="ok">Connection:</span> the ILP solvers I use for logistics assignment are B&amp;B under the hood. Understanding B&amp;B = understanding the tools.</li>
+    <li><span class="ok">Verified:</span> 9-test pytest suite &mdash; known answers, cross-solver agreement, 50 random instances against the brute-force oracle, plus per-solution feasibility checks.</li>
+  </ul>
+  <p style="margin-top: 1.8em; text-align: center;" class="accent" style="font-size: 1.3em;">Questions?</p>
+  <div class="footer-note">github.com/PeterKamau24/CS495-Logistics-Optimization-LLM</div>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/plugin/highlight/highlight.js"></script>
+
+<script>
+  Reveal.initialize({
+    hash: true,
+    slideNumber: 'c/t',
+    transition: 'slide',
+    plugins: [ RevealHighlight ],
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Speaker Notes &mdash; Branch &amp; Bound Capstone</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --accent:   #1565c0;
+      --accent-2: #0277bd;
+      --highlight:#ef6c00;
+      --warn:     #c62828;
+      --ok:       #2e7d32;
+      --muted:    #546e7a;
+      --paper:    #fafafa;
+      --line:     #e0e0e0;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+      color: #1a1a1a; background: #f5f7fa; line-height: 1.55;
+    }
+    .page {
+      max-width: 860px; margin: 0 auto; padding: 2.5em 2em 4em;
+    }
+    header.cover {
+      background: white; border: 1px solid var(--line); border-radius: 10px;
+      padding: 2em 2.2em; margin-bottom: 2em;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    header.cover h1 {
+      margin: 0 0 0.3em; font-size: 1.7em; color: #0d47a1; letter-spacing: -0.01em;
+    }
+    header.cover .subtitle { color: var(--muted); font-size: 1.05em; margin-bottom: 1.2em; }
+    header.cover .meta { font-size: 0.9em; color: var(--muted); }
+    header.cover .meta strong { color: #1a1a1a; }
+    header.cover .target {
+      margin-top: 1.2em; padding: 0.7em 1em; background: #fff3e0;
+      border-left: 4px solid var(--highlight); border-radius: 4px;
+      font-size: 0.9em;
+    }
+    nav.toc {
+      background: white; border: 1px solid var(--line); border-radius: 10px;
+      padding: 1.2em 1.5em; margin-bottom: 2em;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    nav.toc h2 { font-size: 1em; margin: 0 0 0.6em; color: var(--accent); }
+    nav.toc ol { columns: 2; column-gap: 2em; margin: 0; padding-left: 1.4em; font-size: 0.88em; }
+    nav.toc li { margin-bottom: 0.25em; break-inside: avoid; }
+    nav.toc a { color: var(--accent); text-decoration: none; }
+    nav.toc a:hover { text-decoration: underline; }
+
+    section.slide {
+      background: white; border: 1px solid var(--line); border-radius: 10px;
+      padding: 1.6em 1.9em; margin-bottom: 1.5em;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      page-break-inside: avoid;
+    }
+    section.slide .header {
+      display: flex; align-items: baseline; gap: 0.9em;
+      padding-bottom: 0.7em; margin-bottom: 1em;
+      border-bottom: 1px solid var(--line);
+    }
+    section.slide .num {
+      background: var(--accent); color: white;
+      padding: 0.15em 0.65em; border-radius: 999px;
+      font-size: 0.78em; font-weight: 600; letter-spacing: 0.02em;
+    }
+    section.slide .title {
+      font-size: 1.18em; font-weight: 600; color: #0d47a1;
+    }
+    section.slide .cue {
+      font-size: 0.82em; color: var(--muted); margin-bottom: 1em; font-style: italic;
+    }
+    section.slide .cue strong { color: var(--accent-2); font-style: normal; }
+    section.slide .notes p { margin: 0.6em 0; }
+    section.slide .notes p.lead { font-weight: 500; }
+    section.slide .key {
+      background: #e3f2fd; border-left: 3px solid var(--accent);
+      padding: 0.6em 0.9em; margin: 0.9em 0; border-radius: 4px;
+      font-size: 0.92em;
+    }
+    section.slide .qa {
+      margin-top: 1em; padding: 0.7em 0.9em;
+      background: var(--paper); border: 1px solid var(--line); border-radius: 6px;
+      font-size: 0.88em;
+    }
+    section.slide .qa h4 {
+      margin: 0 0 0.4em; font-size: 0.85em; color: var(--accent); text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    section.slide .qa ul { margin: 0; padding-left: 1.3em; }
+    section.slide .qa li { margin-bottom: 0.3em; }
+    code { font-family: "JetBrains Mono", Consolas, monospace; font-size: 0.9em;
+           background: var(--paper); padding: 0.05em 0.35em; border-radius: 3px; }
+    .ok { color: var(--ok); font-weight: 600; }
+    .warn { color: var(--warn); font-weight: 600; }
+    .highlight { color: var(--highlight); font-weight: 600; }
+    .accent { color: var(--accent); font-weight: 600; }
+    .muted { color: var(--muted); }
+    footer {
+      text-align: center; color: var(--muted); font-size: 0.8em;
+      margin-top: 2em; padding-top: 1em; border-top: 1px solid var(--line);
+    }
+    @media print {
+      body { background: white; }
+      .page { padding: 0; max-width: none; }
+      header.cover, nav.toc, section.slide { box-shadow: none; }
+      section.slide { border-color: #aaa; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+<header class="cover">
+  <h1>Branch &amp; Bound for the 0-1 Knapsack Problem</h1>
+  <div class="subtitle">Speaker notes &mdash; Python &middot; C++ &middot; x86-64 Assembly</div>
+  <div class="meta">
+    <strong>Peter Kamau</strong> &nbsp;&middot;&nbsp; Instructor: Prof. Dr. Pedro Albuquerque<br>
+    CS495 Capstone &mdash; Logistics Optimization &amp; LLM &nbsp;&middot;&nbsp; May 2026
+  </div>
+  <div class="target">
+    <strong>Target:</strong> 7 minutes &mdash; flag at 6. 16 slides. Don't rush the tree slide
+    (#6) or the &ldquo;Algorithm Beats Hardware&rdquo; slide (#14) &mdash; those are the two
+    moments the audience needs to feel land.
+  </div>
+</header>
+
+<nav class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#s1">Title</a></li>
+    <li><a href="#s2">The 0-1 Knapsack Problem</a></li>
+    <li><a href="#s3">A Concrete Tiny Instance</a></li>
+    <li><a href="#s4">Baseline: Brute Force</a></li>
+    <li><a href="#s5">Brute Force &mdash; three languages</a></li>
+    <li><a href="#s6">Exponential Scaling &mdash; quantified</a></li>
+    <li><a href="#s7">Branch &amp; Bound &mdash; the idea</a></li>
+    <li><a href="#s8">B&amp;B Decision Tree</a></li>
+    <li><a href="#s9">The Bound &mdash; LP relaxation</a></li>
+    <li><a href="#s10">Same algorithm, three languages</a></li>
+    <li><a href="#s11">B&amp;B &mdash; three languages</a></li>
+    <li><a href="#s12">Connection to capstone</a></li>
+    <li><a href="#s13">Where B&amp;B fits in the capstone</a></li>
+    <li><a href="#s14">Algorithm Beats Hardware</a></li>
+    <li><a href="#s15">Are the Solvers Actually Correct?</a></li>
+    <li><a href="#s16">Takeaways &amp; Q&amp;A</a></li>
+  </ol>
+</nav>
+
+<!-- SLIDE 1 -->
+<section class="slide" id="s1">
+  <div class="header"><span class="num">Slide 1</span><span class="title">Title</span></div>
+  <div class="cue"><strong>On screen:</strong> Title, your name, instructor, date.</div>
+  <div class="notes">
+    <p class="lead">Hi everyone. Today I want to show you how a textbook problem &mdash; 0-1 knapsack &mdash; and a classical algorithm &mdash; Branch &amp; Bound &mdash; explain what's actually happening inside the optimization solvers I'm using for my logistics capstone.</p>
+    <p>I implemented the same algorithm in three languages so we can isolate algorithm wins from language wins. Aim for 7 minutes &mdash; flag me at 6.</p>
+  </div>
+</section>
+
+<!-- SLIDE 2 -->
+<section class="slide" id="s2">
+  <div class="header"><span class="num">Slide 2</span><span class="title">The 0-1 Knapsack Problem</span></div>
+  <div class="cue"><strong>On screen:</strong> Math formulation + &ldquo;why it matters&rdquo; bullets.</div>
+  <div class="notes">
+    <p>Quick problem framing. Every <code>x_i</code> is a binary in-or-out choice. The constraint is capacity. The objective is total value.</p>
+    <p><span class="accent">NP-hard</span> means no known polynomial algorithm that's always exact.</p>
+    <div class="key">
+      Connect it to logistics: items become shipments and capacity becomes the truck. The driver-to-region assignment in my project is the same family &mdash; binary decisions with linear constraints.
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 3 -->
+<section class="slide" id="s3">
+  <div class="header"><span class="num">Slide 3</span><span class="title">A Concrete Tiny Instance</span></div>
+  <div class="cue"><strong>On screen:</strong> 4 items A&ndash;D with values, weights, and value/weight ratios.</div>
+  <div class="notes">
+    <p>Anchor instance. The ratio column is the LP <em>&ldquo;bang for your buck&rdquo;</em> &mdash; high ratio items are the greedy first choices.</p>
+    <p><span class="ok">Optimal here is B+C = value 22 with weight 8.</span> Hold that answer for the tree slide coming up.</p>
+  </div>
+</section>
+
+<!-- SLIDE 4 -->
+<section class="slide" id="s4">
+  <div class="header"><span class="num">Slide 4</span><span class="title">Baseline: Brute Force</span></div>
+  <div class="cue"><strong>On screen:</strong> Python loop enumerating <code>2^n</code> subsets.</div>
+  <div class="notes">
+    <p>Exponential. Adding one item <span class="warn">doubles</span> the work.</p>
+    <p>Even in C++ at n=25 we're at 15 seconds. At n=30 you'd be at 8 minutes. At n=40, days. <strong>This is the wall we have to break.</strong></p>
+  </div>
+</section>
+
+<!-- SLIDE 5 -->
+<section class="slide" id="s5">
+  <div class="header"><span class="num">Slide 5</span><span class="title">Brute Force &mdash; Python vs C++ vs Assembly</span></div>
+  <div class="cue"><strong>On screen:</strong> Bar chart, log scale, three languages from n=3 to n=25.</div>
+  <div class="notes">
+    <p>This is the brute-force benchmark on its own. Note the log scale &mdash; every step up in n is a noticeable jump.</p>
+    <p>Assembly is the fastest by a constant factor, but the curve still explodes.</p>
+    <div class="key">
+      Takeaway: no amount of low-level optimization beats the exponential. We need a smarter algorithm.
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 6 -->
+<section class="slide" id="s6">
+  <div class="header"><span class="num">Slide 6</span><span class="title">Exponential Scaling &mdash; Quantified</span></div>
+  <div class="cue"><strong>On screen:</strong> 3-panel chart &mdash; curve fits (left), growth rate (middle), performance gap (right).</div>
+  <div class="notes">
+    <p>This slide is the rigor check on the brute-force claim.</p>
+    <p><strong>Left panel:</strong> I fit <code>T = a &middot; 2^n</code> to each language's data &mdash; the fits are nearly perfect, confirming the asymptotic.</p>
+    <p><strong>Middle panel:</strong> between consecutive instance sizes, the runtime ratio sits right on the theoretical doubling line.</p>
+    <p><strong>Right panel:</strong> the speedup gap between Python and the compiled languages isn't constant &mdash; it grows, because a constant-factor advantage applied to exponential work shows up more dramatically as n increases.</p>
+    <div class="key">
+      This is the empirical case for <em>&ldquo;you can't out-engineer 2<sup>n</sup>.&rdquo;</em>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 7 -->
+<section class="slide" id="s7">
+  <div class="header"><span class="num">Slide 7</span><span class="title">Branch &amp; Bound &mdash; The Idea</span></div>
+  <div class="cue"><strong>On screen:</strong> Three numbered steps &mdash; Branch / Bound / Prune.</div>
+  <div class="notes">
+    <p class="lead">The whole idea: never expand a subtree we can prove won't beat what we already have.</p>
+    <p><strong>Three parts.</strong> Branch = the decision tree. Bound = an optimistic estimate of what's possible from here. Prune = cut whole subtrees.</p>
+    <p>The <em>sorting</em> is the trick &mdash; it makes the greedy choice the first thing we try, so we have a strong incumbent quickly, which makes the bound condition fire more often.</p>
+  </div>
+</section>
+
+<!-- SLIDE 8 -->
+<section class="slide" id="s8">
+  <div class="header"><span class="num">Slide 8</span><span class="title">B&amp;B Decision Tree &mdash; On Our Tiny Instance</span></div>
+  <div class="cue"><strong>On screen:</strong> Annotated decision tree with INCLUDE/EXCLUDE branches, pruned nodes in red, infeasible in orange.</div>
+  <div class="notes">
+    <p>Walk the tree left to right. We try <code>include-A</code> first (greedy), then <code>include-B</code>, hit a value of 20 quickly.</p>
+    <p>Then under A=0, B=1, C=1 we find value 22 &mdash; <span class="ok">that's our incumbent</span>.</p>
+    <p>Now look at the red nodes: they're not explored because their LP-relaxation upper bound is already &le; 22, so there's no way they can beat it. The orange nodes are infeasible &mdash; over capacity.</p>
+    <div class="key">
+      We've reduced 16 subsets to 9 explored nodes. At n=25 the reduction is closer to a million-to-one.
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 9 -->
+<section class="slide" id="s9">
+  <div class="header"><span class="num">Slide 9</span><span class="title">The Bound: LP Relaxation</span></div>
+  <div class="cue"><strong>On screen:</strong> <code>upper_bound</code> function in Python.</div>
+  <div class="notes">
+    <p><strong>Why this bound?</strong> Because it's tight AND fast.</p>
+    <p><span class="accent">Tight:</span> the LP relaxation is the tightest polynomial bound we know.</p>
+    <p><span class="accent">Fast:</span> with sorted items, it's a single O(n) sweep.</p>
+    <p>The integer-floor trick is what lets the ASM version stay in integer registers &mdash; <strong>no floating point at all.</strong></p>
+  </div>
+</section>
+
+<!-- SLIDE 10 -->
+<section class="slide" id="s10">
+  <div class="header"><span class="num">Slide 10</span><span class="title">Same Algorithm, Three Languages</span></div>
+  <div class="cue"><strong>On screen:</strong> C++ <code>branch()</code> function showing the same shape as the Python version.</div>
+  <div class="notes">
+    <p>Same algorithm, same shape in all three languages. That's deliberate &mdash; it lets us isolate the language overhead from the algorithm overhead.</p>
+    <p>The ASM version was the most fun: I used callee-saved registers as &ldquo;globals&rdquo; for the search state, and recursed using the real call stack. The bound computation is all integer division.</p>
+  </div>
+</section>
+
+<!-- SLIDE 11 -->
+<section class="slide" id="s11">
+  <div class="header"><span class="num">Slide 11</span><span class="title">Branch &amp; Bound &mdash; Python vs C++ vs Assembly</span></div>
+  <div class="cue"><strong>On screen:</strong> Bar chart, microseconds, log scale, three B&amp;B implementations.</div>
+  <div class="notes">
+    <p>This is the Branch &amp; Bound benchmark on its own &mdash; same instances, same machine, times now measured in <strong>microseconds</strong>.</p>
+    <p>The relative ranking across languages is the same as brute force: ASM beats C++ beats Python.</p>
+    <div class="key">
+      Big takeaway: the y-axis units. We've moved from <strong>seconds (brute force) to microseconds (B&amp;B)</strong>, all from a smarter algorithm. Note the log scale.
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 12 -->
+<section class="slide" id="s12">
+  <div class="header"><span class="num">Slide 12</span><span class="title">Connection to My Capstone</span></div>
+  <div class="cue"><strong>On screen:</strong> Two columns &mdash; Logistics ILP track, LLM track.</div>
+  <div class="notes">
+    <p>Here's the bridge to the capstone. The driver-to-region problem is an integer linear program &mdash; binary <code>x[d,r]</code>, cost-minimizing objective, eligibility and coverage constraints.</p>
+    <p>When I write <code>prob.solve()</code> in PuLP, it hands the problem to CBC. <span class="accent">CBC IS Branch and Bound</span> &mdash; with cuts and heuristics on top, but the spine is B&amp;B.</p>
+    <p>On the LLM track, knapsack is the right testbed because it's small, well-defined, and we have ground truth from this work. If I ask an LLM to write a knapsack solver, I can measure whether it found B&amp;B or just brute force.</p>
+  </div>
+</section>
+
+<!-- SLIDE 13 -->
+<section class="slide" id="s13">
+  <div class="header"><span class="num">Slide 13</span><span class="title">Where B&amp;B Fits in the Capstone</span></div>
+  <div class="cue"><strong>On screen:</strong> Pipeline diagram &mdash; production track on top, research track below, both passing through the B&amp;B algorithm family.</div>
+  <div class="notes">
+    <p><strong>Top row is production:</strong> CSV in, PuLP model, CBC solver, assignments out.</p>
+    <p><strong>Bottom row is the research track</strong> I've been building this term: knapsack instances, brute force baseline, B&amp;B implementation, verified speedup.</p>
+    <p>The orange box in the middle &mdash; <span class="highlight">same algorithm family</span>. The reason this work isn't a side quest is that <em>I'm studying the engine I'm depending on.</em></p>
+  </div>
+</section>
+
+<!-- SLIDE 14 -->
+<section class="slide" id="s14">
+  <div class="header"><span class="num">Slide 14</span><span class="title">Algorithm Beats Hardware</span></div>
+  <div class="cue"><strong>On screen:</strong> Headline comparison chart &mdash; B&amp;B (flat) vs brute force in C++ and ASM (climbing).</div>
+  <div class="notes">
+    <p class="lead">This is the headline chart.</p>
+    <p>Three lines climbing the exponential &mdash; C++ brute force, x86-64 ASM brute force &mdash; and one flat line near the bottom: <span class="accent">PuLP/CBC, which uses Branch &amp; Bound</span>.</p>
+    <p>The crossover annotation marks where brute force becomes slower than the smart algorithm. At n=25 the gap is <strong>two orders of magnitude</strong>.</p>
+    <div class="key">
+      The punchline: PuLP is written in Python and calls a C solver, so it's not even the fastest stack &mdash; but the algorithm choice dominates the language choice.
+    </div>
+    <p class="muted">This is the visual proof of the takeaway I'll land on next.</p>
+  </div>
+</section>
+
+<!-- SLIDE 15 -->
+<section class="slide" id="s15">
+  <div class="header"><span class="num">Slide 15</span><span class="title">Are the Solvers Actually Correct?</span></div>
+  <div class="cue"><strong>On screen:</strong> Four verification angles + passing pytest output.</div>
+  <div class="notes">
+    <p>A benchmark is only meaningful if the solver is correct. <strong>Four solvers, four angles of verification.</strong></p>
+    <p><span class="accent">Brute force is the oracle</span> because it tries every subset &mdash; it cannot be wrong on small n. So if B&amp;B agrees with brute force on 50 random seeded instances, plus the canonical instance, plus the disaster-relief instance, that's strong evidence the pruning logic is sound.</p>
+    <p>The invariant check also catches the subtler bug class where the value is right but the reported item list is wrong.</p>
+    <div class="key">
+      Nine tests pass in under a second &mdash; full suite runs on every change.
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 16 -->
+<section class="slide" id="s16">
+  <div class="header"><span class="num">Slide 16</span><span class="title">Takeaways &amp; Q&amp;A</span></div>
+  <div class="cue"><strong>On screen:</strong> Five takeaway bullets + &ldquo;Questions?&rdquo;</div>
+  <div class="notes">
+    <p>Close with the takeaways. Brute force is the baseline that makes the win measurable. B&amp;B uses a clever bound to prune. Same algorithm in three languages cleanly separates the two dimensions. And the connection &mdash; this is the engine of CBC, which is the engine of my capstone.</p>
+    <p>Open the floor.</p>
+  </div>
+  <div class="qa">
+    <h4>Likely Questions &mdash; prepared answers</h4>
+    <ul>
+      <li><strong>&ldquo;Why not dynamic programming?&rdquo;</strong> &mdash; DP is pseudo-polynomial in capacity, great when capacity is small, but for the LP&ndash;ILP connection B&amp;B is the right thing to study.</li>
+      <li><strong>&ldquo;Does the LLM track use this?&rdquo;</strong> &mdash; yes, for evaluation: same instances, compare LLM-generated solvers against this baseline.</li>
+      <li><strong>&ldquo;Why ASM?&rdquo;</strong> &mdash; partly to quantify the ceiling, partly because the capstone has a language-comparison angle.</li>
+      <li><strong>&ldquo;How do you know the solvers are correct?&rdquo;</strong> &mdash; cross-checked against brute force (the oracle) on 50 random seeded instances plus two known-answer instances. Full test suite is in <code>tests/test_knapsack.py</code>.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  github.com/PeterKamau24/CS495-Logistics-Optimization-LLM &nbsp;&middot;&nbsp; Speaker notes for capstone presentation
+</footer>
+
+</div>
+</body>
+</html>
