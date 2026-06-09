@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Capstone Poster &mdash; B&amp;B for Knapsack &middot; CS495</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* ============================================================
+       Capstone poster &mdash; 48" x 36" landscape (3:4 ratio approx).
+       Designed to print at full size; on screen the @page CSS keeps
+       the aspect ratio and the body scales to fit the viewport.
+       ============================================================ */
+    @page {
+      size: 48in 36in;
+      margin: 0;
+    }
+    :root {
+      --bg:        #ffffff;
+      --paper:     #f7f9fc;
+      --line:      #d4dde6;
+      --ink:       #1a1a1a;
+      --muted:     #546e7a;
+      --accent:    #0d47a1;
+      --accent-2:  #1565c0;
+      --accent-3:  #0277bd;
+      --highlight: #ef6c00;
+      --warn:      #c62828;
+      --ok:        #2e7d32;
+      --soft-bg:   #e3f2fd;
+      --soft-warn: #fff3e0;
+      --soft-ok:   #e8f5e9;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: #555; }
+    body {
+      font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+      color: var(--ink); line-height: 1.45;
+    }
+    .poster {
+      width: 48in; height: 36in;
+      background: var(--bg);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      padding: 0.6in;
+      margin: 1em auto;
+      box-shadow: 0 0 28px rgba(0,0,0,0.35);
+      /* Screen-fit: scale the whole poster so any monitor can preview it. */
+      transform-origin: top center;
+    }
+    /* Scale to viewport on screen; print uses @page natural size */
+    @media screen {
+      body { padding-bottom: 4em; }
+      .poster {
+        --target-w: min(96vw, 48in);
+        transform: scale(calc(var(--target-w) / 48in));
+      }
+    }
+
+    /* ---------- Header band ---------- */
+    header.banner {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 0.6in;
+      padding: 0.3in 0.5in;
+      background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%);
+      color: white; border-radius: 12px;
+      margin-bottom: 0.45in;
+    }
+    header.banner .brand {
+      font-size: 24pt; font-weight: 700; letter-spacing: -0.01em;
+      text-transform: uppercase; opacity: 0.85;
+    }
+    header.banner h1 {
+      margin: 0; font-size: 56pt; font-weight: 800;
+      line-height: 1.05; letter-spacing: -0.02em;
+    }
+    header.banner h1 .sub {
+      display: block; font-size: 28pt; font-weight: 500;
+      margin-top: 0.15em; opacity: 0.92;
+    }
+    header.banner .meta {
+      text-align: right; font-size: 18pt; line-height: 1.5;
+    }
+    header.banner .meta .author { font-size: 24pt; font-weight: 700; }
+    header.banner .meta .institution { opacity: 0.85; }
+
+    /* ---------- 3-column body ---------- */
+    main.body {
+      display: grid;
+      grid-template-columns: 1fr 1.15fr 1fr;
+      gap: 0.4in;
+    }
+    .col { display: flex; flex-direction: column; gap: 0.35in; }
+
+    .card {
+      background: var(--bg); border: 1.5pt solid var(--line);
+      border-radius: 10px; padding: 0.3in 0.32in 0.32in;
+      break-inside: avoid;
+    }
+    .card > h2 {
+      margin: 0 0 0.18in; font-size: 24pt; color: var(--accent);
+      padding-bottom: 0.1in; border-bottom: 3pt solid var(--accent-2);
+      letter-spacing: -0.01em;
+    }
+    .card > h2 .num {
+      display: inline-block; background: var(--accent-2); color: white;
+      font-size: 16pt; padding: 0.04em 0.45em; border-radius: 6px;
+      margin-right: 0.45em; vertical-align: middle;
+    }
+    .card p, .card li { font-size: 14pt; }
+    .card ul, .card ol { margin: 0.1in 0; padding-left: 0.32in; }
+    .card li { margin-bottom: 0.08in; }
+    .card .lead {
+      font-size: 15pt; font-weight: 500; color: var(--ink);
+      margin-top: 0;
+    }
+    .card .small { font-size: 12pt; }
+
+    .figure { text-align: center; margin: 0.1in 0; }
+    .figure img {
+      max-width: 100%; height: auto; border-radius: 6px;
+      border: 1pt solid var(--line); background: white;
+    }
+    .figure .caption {
+      margin-top: 0.08in; font-size: 11pt; color: var(--muted);
+      line-height: 1.35; font-style: italic;
+    }
+
+    pre {
+      background: var(--paper); border: 1pt solid var(--line);
+      border-radius: 6px; padding: 0.18in 0.22in; margin: 0.12in 0;
+      font-family: "JetBrains Mono", Consolas, monospace;
+      font-size: 11.5pt; line-height: 1.45;
+      overflow: hidden; white-space: pre-wrap;
+    }
+    code {
+      font-family: "JetBrains Mono", Consolas, monospace;
+      font-size: 0.92em; background: var(--paper);
+      padding: 0.04em 0.32em; border-radius: 3px;
+    }
+
+    table {
+      width: 100%; border-collapse: collapse; font-size: 12pt; margin: 0.12in 0;
+    }
+    th, td { text-align: left; padding: 0.08in 0.14in; border-bottom: 1pt solid var(--line); }
+    th { color: var(--accent); border-bottom: 2pt solid var(--accent-2); font-weight: 700; }
+    td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+    .key {
+      background: var(--soft-bg); border-left: 5pt solid var(--accent-2);
+      padding: 0.16in 0.22in; border-radius: 4px; margin: 0.14in 0;
+      font-size: 13pt;
+    }
+    .highlight-card {
+      background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+      border-left: 6pt solid var(--highlight); border-radius: 6px;
+      padding: 0.22in 0.28in; margin: 0.16in 0;
+    }
+    .highlight-card .headline {
+      font-size: 22pt; font-weight: 700; color: var(--highlight);
+      line-height: 1.15;
+    }
+    .highlight-card .sub {
+      font-size: 13pt; color: var(--ink); margin-top: 0.08in;
+    }
+
+    .stat-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 0.16in; margin: 0.12in 0;
+    }
+    .stat {
+      background: var(--paper); border: 1pt solid var(--line);
+      border-radius: 6px; padding: 0.14in 0.1in; text-align: center;
+    }
+    .stat .num {
+      font-size: 26pt; font-weight: 800; color: var(--accent);
+      line-height: 1; letter-spacing: -0.02em;
+    }
+    .stat .lbl {
+      font-size: 10.5pt; color: var(--muted);
+      margin-top: 0.06in; line-height: 1.25;
+    }
+
+    .ok    { color: var(--ok);        font-weight: 700; }
+    .warn  { color: var(--warn);      font-weight: 700; }
+    .accent { color: var(--accent-2); font-weight: 700; }
+    .hi    { color: var(--highlight); font-weight: 700; }
+
+    /* ---------- Footer ---------- */
+    footer.bottom {
+      margin-top: 0.45in;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 0.4in;
+      padding: 0.24in 0.4in;
+      background: var(--paper);
+      border: 1.5pt solid var(--line); border-radius: 10px;
+      font-size: 11pt;
+    }
+    footer.bottom h3 {
+      margin: 0 0 0.1in; font-size: 14pt;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    footer.bottom ol { margin: 0; padding-left: 0.28in; line-height: 1.45; }
+    footer.bottom .links { font-size: 12pt; line-height: 1.7; }
+    footer.bottom .links strong { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<div class="poster">
+
+  <!-- ===================== BANNER ===================== -->
+  <header class="banner">
+    <div class="brand">CS495<br>Capstone</div>
+    <div>
+      <h1>
+        Branch &amp; Bound for the 0-1 Knapsack Problem
+        <span class="sub">A three-language study &middot; Python &middot; C++ &middot; x86-64 Assembly</span>
+      </h1>
+    </div>
+    <div class="meta">
+      <div class="author">Peter Kamau</div>
+      <div>Instructor: Prof. Dr. Pedro Albuquerque</div>
+      <div class="institution">Bellevue College &middot; May 2026</div>
+    </div>
+  </header>
+
+  <!-- ===================== 3-COLUMN BODY ===================== -->
+  <main class="body">
+
+    <!-- ============ COLUMN 1 ============ -->
+    <div class="col">
+
+      <div class="card">
+        <h2><span class="num">1</span>Problem</h2>
+        <p class="lead">
+          Given <em>n</em> items with weights <em>w<sub>i</sub></em> and values <em>v<sub>i</sub></em>,
+          and a knapsack of capacity <em>C</em> &mdash; pick a subset that
+          <span class="hi">maximizes total value</span> without exceeding capacity.
+        </p>
+        <pre>maximize   &Sigma; v&#7522; &middot; x&#7522;
+subject to &Sigma; w&#7522; &middot; x&#7522; &le; C
+           x&#7522; &isin; {0, 1}</pre>
+        <p class="small">
+          NP-hard. Same family as driver-to-region assignment, truck loading,
+          and the integer programs PuLP/CBC solves under the hood &mdash;
+          studying Branch &amp; Bound here means studying the production engine.
+        </p>
+      </div>
+
+      <div class="card">
+        <h2><span class="num">2</span>Approach</h2>
+        <ol>
+          <li><span class="accent">Branch.</span> DFS over include/exclude decisions, ordered by value/weight ratio so the greedy guess is tried first.</li>
+          <li><span class="accent">Bound.</span> LP relaxation upper bound &mdash; a single O(n) greedy sweep.</li>
+          <li><span class="accent">Prune.</span> Skip any subtree whose bound &le; current incumbent.</li>
+        </ol>
+        <div class="key">
+          Same algorithm in three languages &mdash; Python, C++, x86-64 NASM (Win64 ABI, pure integer math, no FPU). The language is the only variable.
+        </div>
+        <pre>void branch(int level, int cw, int cv) {
+  if (cv &gt; best) best = cv;
+  if (level == N) return;
+  if (upper_bound(level, cw, cv) &lt;= best) return;  // PRUNE
+  if (cw + W[level] &lt;= CAP)                         // INCLUDE
+    branch(level+1, cw + W[level], cv + V[level]);
+  branch(level+1, cw, cv);                           // EXCLUDE
+}</pre>
+      </div>
+
+      <div class="card">
+        <h2><span class="num">3</span>Decision Tree</h2>
+        <div class="figure">
+          <img src="../results/figures/bb_decision_tree.png" alt="Annotated B&B decision tree on a 4-item instance">
+          <div class="caption">
+            <strong>Figure 1.</strong> B&amp;B on a 4-item instance (capacity 8). Of 16 possible subsets, only <span class="ok">9 nodes</span> are visited &mdash; 3 pruned by bound, 2 by infeasibility. Optimal subset <span class="ok">{B,C}</span> with value 22 is found early and powers subsequent pruning.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============ COLUMN 2 (Results) ============ -->
+    <div class="col">
+
+      <div class="card">
+        <h2><span class="num">4</span>Brute Force &mdash; Three Languages</h2>
+        <div class="figure">
+          <img src="../results/figures/benchmark_all_three.png" alt="Brute force benchmark across Python, C++, ASM">
+          <div class="caption">
+            <strong>Figure 2.</strong> Exponential growth in all three languages. At n = 25:
+            Python <span class="warn">102 s</span>, C++ <span class="warn">15.6 s</span>, ASM <span class="warn">4.9 s</span>.
+            Faster language helps &mdash; but you cannot out-engineer 2<sup>n</sup>.
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="num">5</span>Branch &amp; Bound &mdash; Three Languages</h2>
+        <div class="figure">
+          <img src="../results/figures/benchmark_bb_comparison.png" alt="B&B benchmark across Python, C++, ASM">
+          <div class="caption">
+            <strong>Figure 3.</strong> Same instances, units shift from <em>seconds</em> (Fig. 2) to <em>microseconds</em>. That gap is the algorithmic effect. Language ranking is preserved: ASM &lt; C++ &lt; Python.
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="num">6</span>Scaling &mdash; Quantified</h2>
+        <div class="figure">
+          <img src="../results/figures/scaling_all_three.png" alt="Three-panel scaling analysis">
+          <div class="caption">
+            <strong>Figure 4.</strong>
+            <strong>Left:</strong> log-linear fits of <code>T = a&middot;2<sup>n</sup></code> &mdash; identical slope across languages.
+            <strong>Middle:</strong> empirical growth ratio <code>T(n+1)/T(n)</code> hugs the theoretical 2&times; line once n &ge; 10.
+            <strong>Right:</strong> language gap widens with n &mdash; constant factors compound on exponential work.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============ COLUMN 3 ============ -->
+    <div class="col">
+
+      <div class="card">
+        <h2><span class="num">7</span>Algorithm Beats Hardware</h2>
+        <div class="figure">
+          <img src="../results/figures/benchmark_presentation.png" alt="PuLP/CBC B&B versus compiled brute force">
+          <div class="caption">
+            <strong>Figure 5.</strong> Three brute-force curves climb; PuLP/CBC (B&amp;B) is the flat line near the bottom.
+          </div>
+        </div>
+        <div class="highlight-card">
+          <div class="headline">At n = 25, PuLP/CBC beats C++ brute force by ~129&times; and x86-64 ASM brute force by ~580&times;.</div>
+          <div class="sub">A smarter algorithm in a slower language beats brute force in the fastest one.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="num">8</span>Verification</h2>
+        <p class="small">
+          Four solvers, four angles &mdash; <strong>9 pytest checks</strong>, all passing in &lt; 0.25 s.
+        </p>
+        <ul class="small">
+          <li><span class="accent">Known answers:</span> PLAN-v1 (<span class="ok">value = 11</span>) and disaster relief (<span class="ok">value = 598</span>).</li>
+          <li><span class="accent">Cross-solver agreement:</span> PuLP, B&amp;B, brute force all match on the canonical instance.</li>
+          <li><span class="accent">Random-instance fuzzing:</span> 50 seeded instances (n &isin; [1, 12]) &mdash; B&amp;B must equal brute force on every one. Brute force is the <em>oracle</em>.</li>
+          <li><span class="accent">Solution invariants:</span> distinct indices, feasible weight, reported value = &Sigma; values selected.</li>
+        </ul>
+        <pre style="font-size: 10pt;">tests/test_knapsack.py ................. 9 passed in 0.23s</pre>
+      </div>
+
+      <div class="card">
+        <h2><span class="num">9</span>Takeaways</h2>
+        <div class="stat-grid">
+          <div class="stat"><div class="num">~10<sup>6</sup>&times;</div><div class="lbl">B&amp;B speedup over brute force at n = 25</div></div>
+          <div class="stat"><div class="num">~21&times;</div><div class="lbl">ASM speedup over Python (asymptote)</div></div>
+          <div class="stat"><div class="num">9 / 9</div><div class="lbl">tests passing &mdash; cross-solver verified</div></div>
+        </div>
+        <ul class="small">
+          <li><span class="ok">Algorithmic choice dominates language choice.</span> Both effects compound; the algorithm dominates.</li>
+          <li><span class="ok">Same engine.</span> CBC (the solver behind the production ILP) <em>is</em> Branch &amp; Bound &mdash; this work dissects the engine the production track depends on.</li>
+          <li><span class="ok">Future work.</span> LLM-generated-solver comparison using this verification harness as ground truth.</li>
+        </ul>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="bottom">
+    <div>
+      <h3>References</h3>
+      <ol>
+        <li>Land, A. H. &amp; Doig, A. G. (1960). An automatic method for solving discrete programming problems. <em>Econometrica</em> 28(3), 497&ndash;520.</li>
+        <li>Dantzig, G. B. (1957). Discrete-variable extremum problems. <em>Operations Research</em> 5(2), 266&ndash;277.</li>
+        <li>Kellerer, H., Pferschy, U. &amp; Pisinger, D. (2004). <em>Knapsack Problems.</em> Springer.</li>
+        <li>Pisinger, D. (1997). A minimal algorithm for the 0-1 knapsack problem. <em>Operations Research</em> 45(5), 758&ndash;767.</li>
+        <li>Forrest, J. J. &amp; Lougee-Heimer, R. (2005). <em>CBC user guide.</em> INFORMS Tutorials.</li>
+        <li>Mitchell, S., O'Sullivan, M. &amp; Dunning, I. (2011). PuLP: A linear programming toolkit for Python.</li>
+      </ol>
+    </div>
+    <div class="links">
+      <h3>Project</h3>
+      <p>
+        <strong>Code &amp; report:</strong><br>
+        github.com/PeterKamau24/CS495-Logistics-Optimization-LLM
+      </p>
+      <p>
+        <strong>Contact:</strong><br>
+        pm.kamau24@gmail.com
+      </p>
+    </div>
+  </footer>
+
+</div>
+
+</body>
+</html>
