@@ -1,365 +1,201 @@
-# Speaker Notes — Branch & Bound Capstone Presentation
+# Speaker Notes: Capstone Presentation
 
-What to say at the podium for each slide. Total target: **~7 minutes**, leaving
-3 minutes for questions.
+Target: about 7 minutes of talking, 3 minutes for questions.
 
----
+## Before you start
 
-## Pre-talk (30 seconds before you start)
-
-- Have the presentation in fullscreen (press `F` in reveal.js).
-- Speaker notes pop-up: press `S`. Use it on a second monitor if you have one.
-- Glance at the wall clock — write the target end time on your notepad.
-- Take a breath. Smile. Say your opening sentence in your head.
+- Fullscreen the deck.
+- Open speaker view on the second monitor if you have one.
+- Note the wall clock and write down your end time.
+- Take a breath.
 
 ---
 
-## Slide 1 — Title (20s)
+## Slide 1: Title (20s)
 
-> "Good morning. My name is Peter Kamau, this is my CS495 capstone with
-> Prof. Dr. Pedro Albuquerque. The project is about integer optimization for
-> logistics — and today I'm going to show you the algorithm that's powering it
-> under the hood, called Branch and Bound. I implemented it in three languages
-> — Python, C++, and x86-64 Assembly — so we can separate two questions that
-> usually get tangled up: *does the algorithm matter, or does the language
-> matter?* The answer is both, but not by the same amount."
+Open with my name, the project title, and Prof. Albuquerque as the advisor. The project is about integer optimization for logistics. Today I'm focused on the algorithm underneath it, called Branch and Bound. I built the same algorithm in three languages (Python, C++, and x86-64 Assembly) so I could separate two questions that usually get tangled up: does the algorithm matter, or does the language matter? Short answer: both, but not by the same amount.
 
-**Transition:** "Let me start with the problem itself."
+Transition: "Let me start with the problem."
 
 ---
 
-## Slide 2 — The 0-1 Knapsack Problem (30s)
+## Slide 2: The 0-1 Knapsack Problem (30s)
 
-> "This is the canonical knapsack problem. You have n items, each with a weight
-> and a value, and a knapsack of capacity C. You pick a subset — every item is
-> either in or out, that's the 'zero-one' part — that maximizes total value
-> without exceeding capacity. It's NP-hard, meaning we don't know a polynomial
-> algorithm that solves it exactly in the worst case."
+This is the canonical knapsack. You have n items, each with a weight and a value, and a knapsack of capacity C. Pick a subset (each item is in or out, that's the "zero-one" part) that maximizes total value without going over capacity. It's NP-hard.
 
-**Point at the right column.**
+Why this matters for logistics: my production problem is driver-to-region assignment. Each driver is either assigned to a region or not, every assignment has a cost, and there are eligibility constraints. Same structure: binary decisions, linear objective, linear constraints. Every industrial solver I know of (CBC, Gurobi, CPLEX) uses Branch and Bound underneath.
 
-> "Why does this matter for logistics? My capstone's production problem is
-> driver-to-region assignment — every driver is either assigned to a region or
-> not, every assignment has a cost, and you have eligibility constraints.
-> **Same structure.** Binary decisions, linear objective, linear constraints.
-> And every industrial solver — CBC, Gurobi, CPLEX — uses Branch and Bound
-> under the hood."
-
-**Transition:** "Let me show you a concrete tiny example."
+Transition: "Let me show you a small example."
 
 ---
 
-## Slide 3 — A Concrete Tiny Instance (30s)
+## Slide 3: A Concrete Tiny Instance (30s)
 
-> "Four items, capacity 8. I've sorted them by value-per-weight ratio,
-> descending — that's important and I'll come back to it. At n=4 there are 16
-> possible subsets, you could enumerate them by hand. But at n=25 — which is
-> still tiny — that's 33 million subsets. Hold this example in your head,
-> because in two slides we'll walk the actual Branch and Bound tree on this
-> exact instance."
+Four items, capacity 8. I sorted them by value-per-weight ratio, descending. That ordering is going to matter. At n=4 you can list the 16 subsets by hand. But at n=25, which is still tiny, that's 33 million subsets. Hold this example in your head; in a couple of slides we'll walk the actual B&B tree on it.
 
-**Sotto voce, for those who care:** "The optimum here is B plus C — value 22,
-weight 8."
+(If asked: the optimum is B plus C, value 22, weight 8.)
 
-**Transition:** "First, the baseline. The dumbest thing that works."
+Transition: "First, the simplest thing that works."
 
 ---
 
-## Slide 4 — Baseline: Brute Force (30s)
+## Slide 4: Baseline: Brute Force (30s)
 
-> "Brute force is one loop. Iterate over every bitmask from zero to 2^n minus
-> one — that's every possible subset — and keep the best feasible one. It's
-> correct, it's trivial, and it scales like the number of atoms in a small
-> galaxy."
+Brute force is one loop. Iterate through every bitmask from 0 to 2^n minus 1, that's every possible subset, and keep the best feasible one. It's correct and trivial. It also scales as O(2^n) time and O(1) memory. Every new item doubles the work. That's the wall.
 
-**Tap the screen.**
-
-> "The complexity is **O(2^n)** time, **O(1)** extra memory. Every new item
-> doubles the work. This is the wall."
-
-**Transition:** "Here's what that exponential actually looks like, across three
-languages."
+Transition: "Here's what that wall actually looks like across three languages."
 
 ---
 
-## Slide 5 — Brute Force: Python vs C++ vs ASM (45s)  *[NEW PLOT]*
+## Slide 5: Brute Force across Python, C++, ASM (45s)
 
-> "Same six instances — n equals three to twenty-five — three languages.
-> **Y-axis is log scale, seconds.** Read the slope, not the heights."
+Same six instances (n=3 through n=25), three languages, log y-axis in seconds. Read the slope, not the heights.
 
-**Sweep your hand left to right.**
+Every step up in n is roughly an order of magnitude. That's 2^n in disguise. The constant factor between languages is real: at n=25, Assembly is about 21 times faster than Python. But the shape is the same. All three lines have the same slope.
 
-> "Every step up in n is roughly an order of magnitude — that's 2^n in
-> disguise. The constant factor between languages is real — Assembly is about
-> twenty times faster than Python at n=25 — but the *shape* is identical. All
-> three lines have the same slope. **Language choice is a constant factor. The
-> exponential is not.**"
+The numbers: at n=25, Python takes 102 seconds, C++ takes 16, Assembly takes about 5. What happens at n=30? In Python that's roughly 30 minutes. n=40 is half a year. You can't out-engineer 2^n.
 
-**The punchline:**
-
-> "At n=25, Python takes 102 seconds. C++ takes 15. Assembly takes about 5.
-> So the question is — what happens at n=30, or n=40? In Python, n=30 is 30
-> minutes. n=40 is half a year. You cannot out-engineer 2^n. You need a
-> smarter algorithm."
-
-**Transition:** "That smarter algorithm is Branch and Bound."
+Transition: "Which is why I need a smarter algorithm. That's Branch and Bound."
 
 ---
 
-## Slide 6 — Branch and Bound — The Idea (30s)
+## Slide 6: Branch and Bound, the Idea (30s)
 
-> "Three words. **Branch, bound, prune.** Branch means: at each item, recurse
-> on include versus exclude — exactly the same decision tree as brute force.
-> Bound means: at every node, compute an upper bound on the best value the
-> subtree could possibly produce. Prune means: if that upper bound is no better
-> than the best solution you already have, **skip the subtree entirely.**"
+Three words: branch, bound, prune.
 
-**Pause for a beat.**
+- Branch: at each item, recurse on include versus exclude. Same decision tree as brute force.
+- Bound: at every node, compute an upper bound on what the subtree could possibly return.
+- Prune: if that bound is no better than the best solution I already have, skip the whole subtree.
 
-> "It's just informed DFS. The cleverness is in two things — the bound has to
-> be valid and cheap, and the search order matters. I'll show you both."
+It's just informed DFS. The two clever pieces are the bound (has to be valid and cheap) and the search order. Both of those are in the next two slides.
 
-**Transition:** "Here's the tree on our four-item example."
+Transition: "Here's the tree on the four-item example."
 
 ---
 
-## Slide 7 — Decision Tree Picture (60s)  *[BIGGEST PEDAGOGICAL SLIDE]*
+## Slide 7: Decision Tree Picture (60s)
 
-**Stand back, let the audience read for two seconds.**
+Give the audience two seconds to read.
 
-> "OK. Sixteen possible subsets, we explore nine nodes. Walk it left to right
-> with me."
+16 possible subsets, we visit 9 nodes. Walk it left to right.
 
-**Point at the root.**
+Root: nothing picked, LP bound is 27.2 (the best case if items could be fractional).
 
-> "Root: nothing picked yet, LP-relaxation bound is 27.2 — that's the *best
-> case* if we could take fractional items."
+We go include-first. Include A, value 10, weight 2. Include B, value 20, weight 5. Try include C, but C weighs 5 and we have 3 left. Infeasible (orange). Back up, exclude C, try D, same problem. Back up. We have value 20 in hand.
 
-**Move to A=1.**
+Now exclude A from the root. Include B, include C, value 22, weight 8. Feasible (green). That's the incumbent.
 
-> "We descend include-first. Include A — value 10, weight 2. Include B — value
-> 20, weight 5. Now we try include C, but C weighs 5 and we only have 3 left.
-> **Infeasible.** Orange node. We back up, exclude C, descend D — same
-> problem. We back up and we have value 20 in hand."
+From here, look at the red nodes. Those subtrees have LP bounds at or below 22, so they can't beat what we already have. We cut them. Nine nodes touched out of 16. At n=25 the ratio is closer to a thousand to one.
 
-**Move to the right subtree.**
+Key point: the reason this works is the value-per-weight sort. Include-first follows the greedy choice, so we find a strong incumbent fast, which makes the bound condition fire early. Sorting isn't cosmetic. It's what makes the pruning bite.
 
-> "Now we exclude A from the root. Include B, include C — value 22, weight 8.
-> **Feasible.** Green node — this is our best, the incumbent."
-
-**Point at the red nodes.**
-
-> "From here on, look at the red. These subtrees have LP bounds less than or
-> equal to 22 — we *know* they cannot beat what we already have, so we cut
-> them off. **Nine nodes touched out of sixteen.** At n=25, the ratio is closer
-> to a thousand-to-one."
-
-**The key insight:**
-
-> "The reason this works is that we sorted by value-per-weight ratio. The
-> include-first descent follows the greedy choice, which means we find a
-> strong incumbent *fast*, which makes the bound condition fire *early*.
-> **Sorting is not cosmetic — it's the engine of the pruning.**"
-
-**Transition:** "Let me show you what the bound actually is."
+Transition: "Quick look at the bound itself."
 
 ---
 
-## Slide 8 — The Bound: LP Relaxation (45s)
+## Slide 8: The Bound: LP Relaxation (45s)
 
-> "Branch and Bound needs a bound function. Mine is the LP relaxation —
-> meaning, relax the binary constraint, let xᵢ be any value between 0 and 1.
-> The fractional knapsack has a *closed-form greedy solution*: walk the
-> remaining items in ratio order, take each whole, and take a fraction of
-> whatever item first overflows the capacity."
+B&B needs a bound function. I use the LP relaxation: drop the binary constraint, let x_i be any value between 0 and 1. The fractional knapsack has a closed-form greedy answer: walk items in ratio order, take each whole until one overflows the capacity, then take a fraction of that one.
 
-**Tap the code.**
+Because the items are already sorted, this is one O(n) sweep, no LP solver needed. And the integer floor of the LP bound is still a valid bound for the integer problem, which is why my Assembly version stays entirely in integer registers. No floating point. Just idiv.
 
-> "Because the items are already sorted, this is **one O(n) sweep, no LP
-> solver needed.** And the integer floor of this bound is still a valid bound
-> for integer solutions — which is why my Assembly version stays entirely in
-> integer registers. No floating point. Just `idiv`."
-
-**Transition:** "And here's why I did this in three languages."
+Transition: "Why three languages?"
 
 ---
 
-## Slide 9 — Same Algorithm, Three Languages (30s)
+## Slide 9: Same Algorithm, Three Languages (30s)
 
-> "Same recursion. Same prune-then-branch order. Same include-before-exclude
-> descent. Python and C++ are line-for-line equivalent. The Assembly version
-> follows the Windows x64 ABI — r12 and r13 hold pointers to the sorted
-> weights and values, ebx holds the running incumbent, and recursion uses
-> `call` and `ret` on the real call stack. The bound is computed inline in
-> integer division."
+Same recursion, same prune-then-branch order, same include-before-exclude descent. Python and C++ are nearly line for line. The Assembly version follows the Windows x64 ABI: r12 and r13 hold pointers to the sorted weights and values, ebx holds the running incumbent, and recursion uses call and ret on the real call stack. The bound is computed inline with integer division.
 
-**The methodological point:**
+The methodological point: same algorithm in three implementations is a controlled experiment. Any timing difference now is language overhead, not algorithm difference.
 
-> "Same algorithm in three implementations is a **controlled experiment.**
-> Any timing difference is now language overhead, not algorithm difference."
-
-**Transition:** "Here's the result."
+Transition: "And here are the timings."
 
 ---
 
-## Slide 10 — Branch and Bound: Python vs C++ vs ASM (45s)  *[NEW PLOT]*
+## Slide 10: B&B across Python, C++, ASM (45s)
 
-> "Same six instances. Same three languages. Same machine. **Look at the
-> y-axis. Microseconds. Not seconds.**"
+Same six instances, same three languages, same machine. Look at the y-axis. Microseconds, not seconds.
 
-**Compare to the previous plot mentally.**
+Brute force at n=25 in Python was 102 seconds. B&B at n=25 in Python is about 97 microseconds. The language ranking is preserved (Assembly beats C++ beats Python), but the absolute scale dropped by six orders of magnitude.
 
-> "Brute force at n=25 in Python was 102 seconds. Branch and Bound at n=25 in
-> Python is 98 microseconds. The relative language ordering is preserved —
-> Assembly beats C++ beats Python by roughly the same constant factors. But
-> the y-axis has dropped by *six orders of magnitude*."
+This is what I wanted to show. Algorithm and language are two independent axes. They multiply, they don't cancel each other. The algorithm win is six orders of magnitude. The language win is about one. Both real, but the algorithm dominates.
 
-**The clean takeaway:**
-
-> "This is what I wanted to show. **Algorithm and language are orthogonal axes.
-> They multiply, they don't interact.** The algorithm win is six orders of
-> magnitude. The language win is one. Both matter, but the algorithm
-> dominates."
-
-**Transition:** "Now — why is this relevant to a logistics capstone?"
+Transition: "Why does this matter for the capstone?"
 
 ---
 
-## Slide 11 — Connection to My Capstone (30s)
+## Slide 11: Connection to My Capstone (30s)
 
-**Point left.**
+Left side: the production track is a binary ILP. Drivers to regions, minimize cost, respect eligibility. I model it with PuLP, and PuLP hands it to CBC, which is a Branch and Bound solver. The algorithm I just walked through is the same family as what's actually solving my production problem. Knapsack is the didactic sibling.
 
-> "The production track is a binary integer linear program — assign drivers
-> to regions, minimize cost, respect eligibility. I model it with PuLP, and
-> PuLP hands it to **CBC, which is a Branch and Bound solver**. The algorithm
-> I just walked you through is the *same family* as what's actually solving
-> my production problem. Knapsack is the didactic sibling."
+Right side: the LLM track. Knapsack is a perfect testbed because it's small, well-defined, and I have ground truth from this hand-built work. When I ask an LLM to write a knapsack solver later, I can measure whether it produced B&B or just brute force.
 
-**Point right.**
-
-> "On the LLM track — knapsack is the perfect testbed. It's small, it's
-> well-defined, and I have ground truth from this hand-built work. When I ask
-> an LLM to write a knapsack solver, I can *measure* whether it produced
-> Branch and Bound or just brute force."
-
-**Transition:** "Here's the architecture in one picture."
+Transition: "Here's the architecture in one picture."
 
 ---
 
-## Slide 12 — Where B&B Fits in the Capstone (30s)
+## Slide 12: Where B&B Fits in the Capstone (30s)
 
-**Trace the top row.**
+Top row: production. CSV in, preprocessing, PuLP model, CBC solver, assignments out.
 
-> "Top — production. CSV in, preprocessing, PuLP model, CBC solver,
-> assignments out."
+Bottom row: this work. Knapsack instances feed two independent benchmark tracks, brute force on top, B&B below, three languages each.
 
-**Trace the bottom row.**
+The link in the middle: CBC and my hand-built B&B are the same algorithm family. That's why this isn't a side project. I'm studying the engine I depend on.
 
-> "Bottom — this work. Knapsack instances feed two **independent** benchmark
-> tracks: brute force on top, branch and bound on bottom. Three languages
-> each."
-
-**Point at the dashed red line.**
-
-> "And the link in the middle — CBC and my hand-built Branch and Bound are
-> the *same algorithm family*. That's the reason this isn't a side quest.
-> **I'm studying the engine I'm depending on.**"
-
-**Transition:** "Three takeaways, then questions."
+Transition: "Three takeaways, then questions."
 
 ---
 
-## Slide 13 — Takeaways (30s)
+## Slide 13: Takeaways (30s)
 
-> "Three things to leave you with."
+Three things to leave you with.
 
-**Beat 1.**
+1. Algorithm choice dominates language choice. Six orders of magnitude from B&B versus one order from Assembly. Get the algorithm right first.
 
-> "**Algorithm choice dominates language choice.** Six orders of magnitude
-> from Branch and Bound versus one order from Assembly. Get the algorithm
-> right first."
+2. Same algorithm in three languages is a controlled experiment. It cleanly separates the two dimensions.
 
-**Beat 2.**
+3. This is the engine of the tools I'm using. PuLP, CBC, Gurobi all sit on top of Branch and Bound. Understanding knapsack means understanding what's happening when I call `prob.solve()`.
 
-> "**Same algorithm in three languages is a controlled experiment.** It
-> cleanly separates the two dimensions. Neither factor masked the other."
-
-**Beat 3.**
-
-> "**This is the engine of the tools I'm using.** PuLP, CBC, Gurobi — they
-> all sit on top of Branch and Bound. Mastering knapsack means understanding
-> what's happening when I write `prob.solve()`."
-
-**End on confidence.**
-
-> "Thank you. Happy to take questions."
+Close with: "Thank you. Happy to take questions."
 
 ---
 
-## Anticipated Q&A — prep these answers cold
+## Q&A: have these ready
 
-**Q: Why not dynamic programming?**
+**Why not dynamic programming?**
 
-> "DP is pseudo-polynomial — O(n × C) in capacity. It's fantastic when
-> capacity is small, and in fact I use it as a verification cross-check in the
-> test suite. But for the LP-ILP connection I wanted to study, B&B is the
-> right algorithm — it's what CBC is doing."
+DP is pseudo-polynomial, O(n times C) in capacity. It's great when capacity is small, and I actually use it as a verification cross-check in the test suite. For the LP-to-ILP connection I wanted to study, B&B is the right algorithm because it's what CBC is doing.
 
-**Q: Why Assembly? Isn't that overkill?**
+**Why Assembly? Isn't that overkill?**
 
-> "Two reasons. One — it quantifies the *ceiling*. ASM is what you get when
-> nothing is in your way. That gives me a clean upper bound on what
-> hand-tuning is worth. Two — the capstone has a three-language comparison
-> angle, and ASM is the most informative bottom end. Whether you'd maintain
-> ASM in production is a separate question — and the answer is usually no."
+Two reasons. One: it gives me a ceiling. ASM is what you get when nothing is in your way, so it sets a clean upper bound on what hand-tuning is worth. Two: the project has a three-language comparison angle, and ASM is the most informative bottom end. Whether you'd actually maintain ASM in production is a separate question, and the answer is usually no.
 
-**Q: What's the LP relaxation actually doing here?**
+**What's the LP relaxation actually doing?**
 
-> "It's solving a *fractional* knapsack — same items, but you can take half
-> an item. That has a closed-form greedy solution when items are sorted by
-> value-to-weight ratio. The relaxed optimum is always at least as large as
-> the integer optimum, so it's a valid upper bound. And because the
-> relaxation is tight, the bound prunes aggressively."
+It's solving the fractional knapsack. Same items, but you can take a fraction of an item. That has a closed-form greedy solution when items are sorted by value-to-weight ratio. The relaxed optimum is always at least as large as the integer optimum, so it's a valid upper bound. Because the relaxation is tight, the bound prunes aggressively.
 
-**Q: Does this scale to your production instance?**
+**Does this scale to your production instance?**
 
-> "The driver-region instance is small — four drivers, three regions — and
-> CBC solves it in milliseconds. Where this work pays off is in
-> *understanding* what CBC is doing, so when I scale to a real fleet I'll
-> know what knobs to turn — cuts, heuristics, warm starts."
+The driver-region instance is small (four drivers, three regions) and CBC solves it in milliseconds. Where this work pays off is in understanding what CBC is doing, so when I scale to a real fleet I'll know which knobs to turn: cuts, heuristics, warm starts.
 
-**Q: How did you verify correctness across the three languages?**
+**How did you verify correctness across the three languages?**
 
-> "Every implementation returns the optimal value, and I cross-checked
-> against (a) the brute-force baseline on small instances, (b) PuLP/CBC as an
-> independent reference, and (c) a pytest suite that runs the canonical
-> instances. All three languages return the same optima."
+Every implementation returns the optimal value, and I cross-checked against three things: the brute-force baseline on small instances, PuLP/CBC as an independent reference, and a pytest suite that runs the canonical instances. All three languages return the same optima.
 
-**Q: Why didn't you compare B&B against brute force in a single chart?**
+**Why didn't you compare B&B against brute force on a single chart?**
 
-> "Deliberate choice. They're different algorithms with different asymptotic
-> complexities and the comparison is, in some sense, unfair — you'd be
-> measuring milliseconds against minutes. The cleaner story is to present
-> each algorithm on its own and let the y-axis units do the comparison.
-> That's what the two plots do — log seconds for brute force, microseconds
-> for B&B."
+That was a deliberate choice. They're different algorithms with different asymptotic complexities, and the comparison is in some sense unfair: milliseconds against minutes. It reads cleaner to present each algorithm on its own and let the y-axis units do the comparison. That's what the two plots do: log seconds for brute force, microseconds for B&B.
 
 ---
 
 ## Delivery tips
 
-- **Don't read your slides.** The audience can read. Your job is to add
-  *what's not on the slide* — the why, the intuition, the connection.
-- **Pause after big claims.** "Six orders of magnitude" deserves a one-second
-  pause.
-- **Look at the audience, not the screen.** Glance at the screen only to
-  point.
-- **If you blank: go to the next slide.** Don't apologize, don't backtrack.
-  Forward motion.
-- **Time check at slide 7.** If you're past 3:30, speed up the bound slide.
-  If you're under 3:00, slow down the decision tree.
-- **End on time. End on time. End on time.** Stopping at 7:00 with one minute
-  of buffer is better than rushing the takeaways.
+- Don't read the slides. The audience can read. Add what's not on the slide: the why, the intuition, the connection.
+- Pause after big claims. "Six orders of magnitude" deserves a one-second pause.
+- Look at the audience, not the screen. Glance at the screen only to point.
+- If I blank, go to the next slide. No apology, no backtracking. Forward.
+- Time check at slide 7. If I'm past 3:30, speed up the bound slide. Under 3:00, slow down the decision tree.
+- End on time. Stopping at 7:00 with a minute of buffer beats rushing the takeaways.
 
-Good luck. You know this material — your job at the podium is to let the
-audience see that you know it.
+You know this material. The job at the podium is to let the audience see that you know it.
