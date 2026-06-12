@@ -18,7 +18,7 @@
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{multicol}
-\usepackage{xcolor}
+\usepackage[table]{xcolor}
 \usepackage{enumitem}
 \usepackage{tcolorbox}
 \usepackage{tikz}
@@ -61,7 +61,7 @@
         left=12pt, right=14pt, top=6pt, bottom=6pt,
     },
     title filled=true,
-    before skip=10pt, after skip=10pt,
+    before skip=6pt, after skip=6pt,
     overlay unbroken and first={
         \fill[BCRed] (frame.north west) rectangle ([xshift=12pt]frame.north west|-title.south);
     },
@@ -84,6 +84,12 @@
 
 % ---------- Figure caption helper ----------
 \newcommand{\figcap}[1]{\vspace{0.2em}\par{\small\itshape\color{BCDarkBlue}#1}\par}
+
+% ---------- Keyword highlighting ----------
+% \kw{...} : secondary highlight (BC dark blue, bold) -- used liberally
+% \KW{...} : primary highlight  (BC red, bold)        -- used sparingly for headline terms
+\newcommand{\kw}[1]{\textcolor{BCDarkBlue}{\textbf{#1}}}
+\newcommand{\KW}[1]{\textcolor{BCRed}{\textbf{#1}}}
 
 \begin{document}
 
@@ -145,34 +151,34 @@
 
 % ---------- LEFT COLUMN ----------
 \begin{posterblock}{Abstract}
-This capstone studies the \textbf{0-1 knapsack problem} via Branch \& Bound (B\&B), implementing the same algorithm in three languages (Python, C++, and x86-64 NASM) and benchmarking it against brute-force baselines on instances up to $n = 25$. The PuLP/COIN-CBC solver used in the project's companion driver-to-region ILP is itself a B\&B engine, so dissecting B\&B in isolation dissects the production solver. Results show algorithmic choice ($\sim$10\textsuperscript{6}$\times$ speedup) dominates language choice ($\sim$21$\times$ speedup), and the language ranking (ASM $<$ C++ $<$ Python) is preserved across both algorithms. A nine-test verification harness (PuLP reference, cross-solver agreement, and 50 random-instance fuzz checks) validates correctness end to end.
+This capstone studies the \kw{0-1 knapsack problem} via \KW{Branch \& Bound (B\&B)}, implementing the \kw{same algorithm} in three languages (\kw{Python}, \kw{C++}, and \kw{x86-64 NASM}) and benchmarking it against brute-force baselines on instances up to $n = 25$. The PuLP/COIN-CBC solver used in the project's companion driver-to-region ILP is \emph{itself} a B\&B engine, so dissecting B\&B in isolation dissects the production solver. Results show \KW{algorithmic choice} ($\sim$10\textsuperscript{6}$\times$ speedup) \kw{dominates} \KW{language choice} ($\sim$21$\times$ speedup), and the language ranking (ASM $<$ C++ $<$ Python) is \kw{preserved across both algorithms}. A \kw{nine-test verification harness} (PuLP reference, cross-solver agreement, and 50 random-instance fuzz checks) validates correctness end to end.
 
 \vspace{0.5em}
 \textbf{Keywords:} \textit{Branch \& Bound, 0-1 Knapsack, Integer Programming, PuLP/CBC, x86-64 Assembly}
 \end{posterblock}
 
 \begin{posterblock}{Introduction \& Motivation}
-The 0-1 knapsack problem is the canonical small example of NP-hard combinatorial optimization, the same family as driver-to-region assignment, truck loading, and the integer programs PuLP/CBC solves under the hood. Studying B\&B on knapsack therefore means studying the engine the production track depends on. Brute force is $O(2^n)$: feasible at $n=25$ in seconds, but useless at production scale. B\&B prunes the search tree with a tight LP-relaxation bound and runs in microseconds on the same instances.
+The 0-1 knapsack problem is the canonical small example of \KW{NP-hard} combinatorial optimization, the same family as driver-to-region assignment, truck loading, and the integer programs PuLP/CBC solves under the hood. Studying \kw{B\&B} on knapsack therefore means studying the \kw{engine the production track depends on}. Brute force is \KW{$O(2^n)$}: feasible at $n=25$ in seconds, but useless at production scale. B\&B prunes the search tree with a \kw{tight LP-relaxation bound} and runs in \KW{microseconds} on the same instances.
 
 \vspace{0.5em}
 \textbf{Research Questions}
 \begin{itemize}[leftmargin=1.4em,itemsep=4pt,topsep=4pt]
-  \item How does algorithmic choice (B\&B vs.\ brute force) compare with language choice (Python / C++ / ASM)?
-  \item Does the language ranking persist when the algorithm changes?
-  \item How can correctness be cross-validated across four independent solver implementations?
+  \item How does \kw{algorithmic choice} (B\&B vs.\ brute force) compare with \kw{language choice} (Python / C++ / ASM)?
+  \item Does the \kw{language ranking persist} when the algorithm changes?
+  \item How can correctness be \kw{cross-validated} across four independent solver implementations?
 \end{itemize}
 
 \vspace{0.3em}
 \textbf{Objectives}
 \begin{itemize}[leftmargin=1.4em,itemsep=4pt,topsep=4pt]
-  \item Implement brute force and B\&B in Python, C++, and x86-64 NASM (Win64 ABI).
+  \item Implement brute force and \kw{B\&B} in \kw{Python}, \kw{C++}, and \kw{x86-64 NASM} (Win64 ABI).
   \item Benchmark wall-clock time across $n = 5 \ldots 25$.
-  \item Cross-validate against PuLP/CBC and a brute-force oracle.
+  \item Cross-validate against \kw{PuLP/CBC} and a brute-force oracle.
 \end{itemize}
 \end{posterblock}
 
 \begin{posterblock}{Data Description}
-Benchmark inputs are 0-1 knapsack instances with integer weights and values. Readers accept two file layouts: a four-line canonical format used by the project's seed instance and a three-line ``$n\ C$ / weights / values'' format used by the larger synthetic suite.
+Benchmark inputs are \kw{0-1 knapsack instances} with integer weights and values. Readers accept two file layouts: a four-line canonical format used by the project's seed instance and a three-line ``$n\ C$ / weights / values'' format used by the larger synthetic suite.
 
 \vspace{0.6em}
 \renewcommand{\arraystretch}{1.35}
@@ -190,13 +196,22 @@ Missing data  & 0\% \\
 \end{posterblock}
 
 \begin{posterblock}{Exploratory Data Analysis}
-A small instance reveals how aggressively B\&B prunes the search space before any large benchmark is run.
+A small instance reveals \kw{how aggressively B\&B prunes} the search space before any large benchmark is run.
 
 \vspace{0.3em}
 \begin{center}
-\includegraphics[width=0.80\linewidth]{bb_decision_tree.png}
+\includegraphics[width=1.0\linewidth]{bb_decision_tree.png}
 \end{center}
-\figcap{B\&B on a 4-item instance (capacity 8). Of the 16 possible subsets, only \textbf{9 nodes} are visited: 3 pruned by bound, 2 by infeasibility. The optimal subset $\{B, C\}$ with value 22 is found early and powers subsequent pruning.}
+\figcap{B\&B on a 4-item instance (capacity 8). Of the 16 possible subsets, only \KW{9 nodes} are visited: \kw{3 pruned by bound}, \kw{2 by infeasibility}. The optimal subset $\{B, C\}$ with value 22 is found early and powers subsequent pruning.}
+\end{posterblock}
+
+\begin{posterblock}{Acknowledgments}
+\textbf{Faculty Advisor:} Dr.~Pedro Albuquerque \\
+\textbf{Course:} CS\,495 Capstone, Bellevue College \\
+\textbf{Contact:} \texttt{pm.kamau24@gmail.com}
+
+\vspace{0.3em}
+Thanks to the Bellevue College CS program for hosting this capstone.
 \end{posterblock}
 
 % ---------- COLUMN BREAK ----------
@@ -205,14 +220,14 @@ A small instance reveals how aggressively B\&B prunes the search space before an
 \begin{posterblock}{Methodology}
 \textbf{Three-step Branch \& Bound:}
 \begin{enumerate}[leftmargin=1.6em,itemsep=4pt,topsep=4pt]
-  \item \textbf{Branch.} DFS over include/exclude decisions, ordered by value-to-weight ratio so the greedy guess is tried first.
-  \item \textbf{Bound.} LP-relaxation upper bound: a single $O(n)$ greedy sweep.
-  \item \textbf{Prune.} Skip any subtree whose bound $\le$ current incumbent.
+  \item \KW{Branch.} DFS over include/exclude decisions, ordered by \kw{value-to-weight ratio} so the greedy guess is tried first.
+  \item \KW{Bound.} \kw{LP-relaxation} upper bound: a single $O(n)$ greedy sweep.
+  \item \KW{Prune.} Skip any subtree whose bound $\le$ current incumbent.
 \end{enumerate}
 
 \vspace{0.4em}
 \begin{callout}
-The \textit{same} algorithm is implemented in three languages: Python, C++, x86-64 NASM (Win64 ABI, pure integer math, no FPU). The language is the only variable.
+The \emph{same} algorithm is implemented in three languages: \kw{Python}, \kw{C++}, \kw{x86-64 NASM} (Win64 ABI, pure integer math, no FPU). \KW{The language is the only variable.}
 \end{callout}
 
 \vspace{0.3em}
@@ -230,7 +245,7 @@ void branch(int level, int cw, int cv) \{\\
 \end{posterblock}
 
 \begin{posterblock}{Model \& Analysis}
-The 0-1 knapsack problem is the integer program
+The 0-1 knapsack problem is the \kw{integer program}
 
 \vspace{0.3em}
 \begin{callout}
@@ -243,20 +258,20 @@ x_i \in \{0, 1\}.
 $
 \end{callout}
 
-The LP relaxation drops $x_i \in \{0,1\}$ in favor of $x_i \in [0, 1]$, producing a tight upper bound: items are sorted by $v_i / w_i$ and packed until the next item exceeds the remaining capacity, taking a fractional slice at the cut. Any partial assignment whose LP bound is $\le$ the current incumbent is pruned, removing entire subtrees from the search.
+The \KW{LP relaxation} drops $x_i \in \{0,1\}$ in favor of $x_i \in [0, 1]$, producing a \kw{tight upper bound}: items are sorted by $v_i / w_i$ and packed until the next item exceeds the remaining capacity, taking a fractional slice at the cut. Any partial assignment whose LP bound is $\le$ the current incumbent is \KW{pruned}, removing entire subtrees from the search.
 
 \vspace{0.5em}
 \textbf{Validation Setup}
 \begin{itemize}[leftmargin=1.4em,itemsep=4pt,topsep=4pt]
-  \item Instance generation: seeded for reproducibility.
-  \item Oracle agreement: B\&B output checked against the brute-force optimum on 50 random instances ($n \in [1, 12]$).
-  \item Reference solver: PuLP/COIN-CBC on the same instances.
-  \item Software stack: Python 3, C++17 (g++ MinGW, static), NASM, PuLP, COIN-CBC.
+  \item \kw{Instance generation:} seeded for reproducibility.
+  \item \kw{Oracle agreement:} B\&B output checked against the brute-force optimum on \KW{50 random instances} ($n \in [1, 12]$).
+  \item \kw{Reference solver:} PuLP/COIN-CBC on the same instances.
+  \item \kw{Software stack:} Python 3, C++17 (g++ MinGW, static), NASM, PuLP, COIN-CBC.
 \end{itemize}
 \end{posterblock}
 
 \begin{posterblock}{Implementation \& Tools}
-Four solver implementations (Python brute force, plus B\&B in Python, C++, and ASM) are tested against the same canonical instances. The ASM build is statically linked so it can be invoked as a subprocess from the benchmark harness.
+\KW{Four solver implementations} (Python brute force, plus B\&B in Python, C++, and ASM) are tested against the same canonical instances. The ASM build is \kw{statically linked} so it can be invoked as a subprocess from the benchmark harness.
 
 \vspace{0.4em}
 \renewcommand{\arraystretch}{1.3}
@@ -264,44 +279,51 @@ Four solver implementations (Python brute force, plus B\&B in Python, C++, and A
 \toprule
 \textbf{Component} & \textbf{Tools / Libraries} \\
 \midrule
-Language       & Python 3.x, C++17, x86-64 NASM (Win64 ABI) \\
-Modeling       & PuLP + COIN-CBC \\
+Language       & \kw{Python 3.x}, \kw{C++17}, \kw{x86-64 NASM} (Win64 ABI) \\
+Modeling       & \kw{PuLP} + \kw{COIN-CBC} \\
 Visualization  & matplotlib \\
 Build / Test   & g++ MinGW (static), pytest, GNU Make \\
 \bottomrule
 \end{tabular}
+
+\vspace{0.5em}
+\begin{center}
+\includegraphics[width=1.0\linewidth]{project_pipeline.png}
+\end{center}
+\figcap{End-to-end pipeline: each solver consumes the same canonical instance and is cross-checked against the others.}
 \end{posterblock}
 
 % ---------- COLUMN BREAK ----------
 \columnbreak
 
 \begin{posterblock}{Results}
-\textbf{Brute force across three languages.} Exponential growth dominates in all three.
+\textbf{Brute force across three languages.} \KW{Exponential growth dominates} in all three.
 \begin{center}
-\includegraphics[width=0.66\linewidth]{benchmark_all_three.png}
+\includegraphics[width=0.92\linewidth]{benchmark_all_three.png}
 \end{center}
-\figcap{At $n=25$: Python 102\,s, C++ 15.6\,s, ASM 4.9\,s. A faster language helps, but you cannot out-engineer $2^n$.}
+\figcap{At $n=25$: \kw{Python 102\,s}, \kw{C++ 15.6\,s}, \kw{ASM 4.9\,s}. A faster language helps, but you \KW{cannot out-engineer $2^n$}.}
 
-\vspace{0.4em}
-\textbf{Identical exponential slope, three constants.} Log-linear fits of $T = a\cdot 2^n$ confirm $O(2^n)$ growth across all three brute-force implementations.
+\vspace{0.1em}
+\textbf{Identical exponential slope, three constants.} Log-linear fits of $T = a\cdot 2^n$ confirm \KW{$O(2^n)$ growth} across all three brute-force implementations.
 \begin{center}
-\includegraphics[width=0.70\linewidth]{scaling_all_three.png}
+\includegraphics[width=0.92\linewidth]{scaling_all_three.png}
 \end{center}
-\figcap{The language sets the constant ($a$); it does not change the curve. The ASM $<$ C++ $<$ Python ranking is preserved across the fits. Constant factors compound on exponential work.}
+\figcap{The language sets the constant ($a$); it does \emph{not} change the curve. The \kw{ASM $<$ C++ $<$ Python} ranking is preserved across the fits. Constant factors compound on exponential work.}
 
-\vspace{0.4em}
+\vspace{0.1em}
 \textbf{Same algorithm beats a faster language.} PuLP/CBC (a B\&B engine) is the flat line near the bottom; the three brute-force curves climb past it.
 \begin{center}
-\includegraphics[width=0.66\linewidth]{benchmark_presentation.png}
+\includegraphics[width=0.92\linewidth]{benchmark_presentation.png}
 \end{center}
-\figcap{Wall-clock time vs.\ $n$. PuLP/CBC (a B\&B engine) holds flat in milliseconds while all three brute-force curves climb exponentially. Algorithm choice dominates language choice.}
+\figcap{Wall-clock time vs.\ $n$. \kw{PuLP/CBC} (a B\&B engine) holds flat in \kw{milliseconds} while all three brute-force curves climb \kw{exponentially}. \KW{Algorithm choice dominates language choice.}}
 
+\vspace{0.1em}
 \begin{highlight}
-{\bfseries\large At $n = 25$, PuLP/CBC beats ASM brute force by $\sim$170$\times$ and C++ brute force by $\sim$550$\times$.}\\[4pt]
-\normalfont\normalsize A smarter algorithm in a slower language beats brute force in the fastest one.
+{\bfseries\large At $n = 25$, \KW{PuLP/CBC beats ASM brute force by $\sim$170$\times$} and \KW{C++ brute force by $\sim$550$\times$}.}\\[4pt]
+\normalfont\normalsize A \kw{smarter algorithm in a slower language} beats brute force in the fastest one.
 \end{highlight}
 
-\vspace{0.4em}
+\vspace{0.1em}
 \textbf{Performance Summary at} \boldmath$n = 25$\unboldmath
 
 \vspace{0.3em}
@@ -314,43 +336,40 @@ Build / Test   & g++ MinGW (static), pytest, GNU Make \\
 Python brute force & 102.22\,s & 1$\times$              \\
 C++ brute force    & 15.60\,s  & $\sim$7$\times$        \\
 ASM brute force    & 4.88\,s   & $\sim$21$\times$       \\
-PuLP/CBC (B\&B)    & 0.028\,s  & $\sim$3{,}650$\times$  \\
+\rowcolor{BCLightBlue}\textbf{PuLP/CBC (B\&B)} & \textbf{0.028\,s} & \KW{$\sim$3{,}650$\times$} \\
 \bottomrule
 \end{tabular}
 \RaggedRight
 \end{posterblock}
 
 \begin{posterblock}{Discussion \& Conclusions}
-\textbf{Algorithmic choice dominates language choice,} and the two effects compound. A $\sim$10\textsuperscript{6}$\times$ speedup from B\&B dwarfs the $\sim$21$\times$ speedup from a fully hand-coded ASM brute force.
+\KW{Algorithmic choice dominates language choice,} and the two effects \kw{compound}. A $\sim$10\textsuperscript{6}$\times$ speedup from B\&B \kw{dwarfs} the $\sim$21$\times$ speedup from a fully hand-coded ASM brute force.
 
 \vspace{0.5em}
 \textbf{Key Takeaways}
 \begin{itemize}[leftmargin=1.4em,itemsep=4pt,topsep=4pt]
-  \item The language ranking (ASM $<$ C++ $<$ Python) is preserved across both algorithms. Constant factors compound on exponential work.
-  \item The CBC solver used by PuLP \textit{is} Branch \& Bound; the algorithmic study and the production solver are the same engine.
-  \item Cross-solver verification (4 solvers, 9 tests, 50 random instances) caught no disagreements after the algorithm was finalized.
+  \item The \kw{language ranking} (ASM $<$ C++ $<$ Python) is \KW{preserved across both algorithms}. Constant factors compound on exponential work.
+  \item The CBC solver used by PuLP \emph{is} Branch \& Bound; the algorithmic study \kw{and the production solver are the same engine}.
+  \item \kw{Cross-solver verification} (4 solvers, 9 tests, 50 random instances) caught \KW{no disagreements} after the algorithm was finalized.
 \end{itemize}
 
 \vspace{0.3em}
-\textbf{Limitations:} synthetic instances only; $n$ capped at 25 because brute force becomes infeasible past that point; B\&B wall-clock time is instance-specific, not monotone in $n$ (e.g., $n = 22$ ran faster than $n = 20$ in our trials).
+\textbf{Limitations:} synthetic instances only; $n$ capped at 25 because brute force becomes infeasible past that point; B\&B wall-clock time is instance-specific, \emph{not} monotone in $n$ (e.g., $n = 22$ ran faster than $n = 20$ in our trials).
 
 \vspace{0.3em}
-\textbf{Future Work:} LLM-generated-solver comparison using this verification harness as ground truth.
+\textbf{Future Work:} \kw{LLM-generated-solver comparison} using this verification harness as ground truth.
 \end{posterblock}
 
 \begin{posterblock}{References}
-\footnotesize
+\scriptsize
 \begin{enumerate}[leftmargin=1.4em,itemsep=1pt,topsep=2pt]
   \item Land, A.\,H.\ \& Doig, A.\,G.\ (1960). An automatic method for solving discrete programming problems. \textit{Econometrica} 28(3), 497--520.
   \item Dantzig, G.\,B.\ (1957). Discrete-variable extremum problems. \textit{Operations Research} 5(2), 266--277.
   \item Kellerer, H., Pferschy, U.\ \& Pisinger, D.\ (2004). \textit{Knapsack Problems.} Springer.
   \item Pisinger, D.\ (1997). A minimal algorithm for the 0-1 knapsack problem. \textit{Operations Research} 45(5), 758--767.
   \item Forrest, J.\,J.\ \& Lougee-Heimer, R.\ (2005). \textit{CBC user guide.} INFORMS Tutorials.
-  \item Mitchell, S., O'Sullivan, M.\ \& Dunning, I.\ (2011). PuLP: A linear programming toolkit for Python.
+  \item Mitchell, S.\ et al.\ (2011). PuLP: An LP modeler for Python.
 \end{enumerate}
-\vspace{0.3em}
-\textit{Acknowledgments:} thanks to \textbf{Dr.~Pedro Albuquerque} and the Bellevue College CS program. \textbf{Contact:} pm.kamau24@gmail.com \;\textbar\; \textbf{Code:} github.com/PeterKamau24/CS495-Logistics-Optimization-LLM
-\normalsize
 \end{posterblock}
 
 \end{multicols}
